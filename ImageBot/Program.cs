@@ -5,44 +5,31 @@ using Newtonsoft.Json;
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace ImageBot
 {
-    enum AcceptedInput
-    {
-        Empty,
-        NoSpaces,
-        Url
-    }
-
     class Program
     {
-        private static string _configFile = "config.json"; // TODO: rename? config.json credentials.json. credentials only save???
+        //private static string _configFile = "config.json"; // TODO: rename? config.json credentials.json. credentials only save???
         // Add settings.json
         // stats.json
-        // Unlimited retry
-
-        private static Config _config;
-
-        // # Client
-        private static MastodonClient _client = null;
-        private static AccessScope _scopes = AccessScope.Read | AccessScope.Write;
 
 
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            PrintBanner();
 
-            DeleteConfigFile(); // TODO: remove.
+            ConfigurationManager.DeleteConfigFile(); // TODO: remove.
 
-            if (IsConfigured())
+            if (ConfigurationManager.IsConfigured())
             {
 
             }
             else
             {
-                LogWarning("Bot have not been configured.");
+                PrintWarning("Bot have not been configured.");
                 SetupAsync().Wait();
             }
 
@@ -50,192 +37,85 @@ namespace ImageBot
             Console.ReadKey();
         }
 
-        private static bool IsConfigured()
-        {
-            if (File.Exists(_configFile))
-            {
-                _config = LoadConfigFile();
-                if (_config != null && _config.IsConfigured)
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        private static Config LoadConfigFile()
-        {
-            Config config = null;
-
-            try
-            {
-                string json = File.ReadAllText(_configFile);
-                config = JsonConvert.DeserializeObject<Config>(json);
-            }
-            catch (IOException)
-            {
-                Console.WriteLine("Error: Could not open file.");
-            }
-
-            return config;
-        }
+        
 
         private static async Task SetupAsync()
         {
             Console.WriteLine("Starting initial setup. Follow the instructions to setup bot.");
-            _config = new Config();
 
             // Instance Url
             Console.WriteLine();
-            ///_config.Instance = GetInstanceUrl();
+            ///string instanceUrl = GetInstanceUrl();
+            string instanceUrl = "mstdn.jp";
 
-            // Application Name
+
+            // Create Manager
+            ConfigurationManager manager = new ConfigurationManager(instanceUrl);
+            manager.Log += Manager_Log;
+            manager.LogWarning += Manager_LogWarning;
+            manager.LogError += Manager_LogError;
+
+
+            // Get Application Name
             Console.WriteLine();
-            ///_config.ApplicationName = GetApplicationName();
-
+            ///string applicationName = GetApplicationName();
+            string applicationName = "ImageBot";
 
             // Register application
-            _client = new MastodonClient(_config.Instance);
-            await RegisterApplication();
-
-            // Authorize Url
-            AuthorizeBot();
-
-            // Code
-            string code = GetAuthorizationCode();
-
-            // Access token
-            await GetAccessToken(code);
-
-            // Verify
-            //_client.Apps.VerifyCredentialsAsync()
-
-            // Save Credentials
-            // ....
-
-            Console.WriteLine("Done");
-
-            // Save
-            SaveConfigFile();
-        }
-
-        private static async Task GetAccessToken(string code)
-        {
-            Console.WriteLine("Getting access token...");
-
-            bool error = true;
-            ConsoleKey key;
-            do
-            {
-                try
-                {
-                    await _client.Auth.AccessTokenAsync(Constants.RedirectUriForClient, code);
-                    error = false;
-                }
-                catch (System.Net.Http.HttpRequestException)
-                {
-                    LogError("Error: Could not connect to instance server.");
-                }
-
-                if (error == false)
-                {
-                    break;
-                }
-
-                Console.WriteLine("Try again? (Y/n): ");
-                key = Console.ReadKey().Key;
-                Console.WriteLine();
-
-                if (key == ConsoleKey.N)
-                {
-                    Console.WriteLine("Exiting...");
-                    Environment.Exit(1);
-                }
-
-            } while (true);
-        }
-
-        private static string GetAuthorizationCode()
-        {
-            string code = string.Empty;
-            bool valid = false;
-            do
-            {
-                Console.Write("Code: ");
-                code = Console.ReadLine();
-
-                Console.WriteLine("len: " + code.Length);
-                if (!string.IsNullOrEmpty(code) && code.Length == 43)
-                {
-                    valid = true;
-                }
-                else
-                {
-                    Console.WriteLine("Invalid code.");
-                }
-
-            } while (!valid);
-
-            return code;
-        }
-
-        private static void AuthorizeBot()
-        {
-            Console.WriteLine("Authorize bot");
-            string url = string.Empty;
-
             try
             {
-                 url = _client.Auth.AuthorizeUrl(Constants.RedirectUriForClient, _scopes);
-                Process.Start(url); // Open in browser.
+                await manager.RegisterApplication(applicationName);
+            }
+            catch (System.Net.Http.HttpRequestException)
+            {
+                Environment.Exit(1);
+            }
+
+
+            // Get Auth Url
+            string authUrl = manager.GetAuthorizationUrl();
+
+            // Open in browser
+            try
+            {
+                Process.Start(authUrl);
             }
             catch (System.ComponentModel.Win32Exception)
             {
-                LogError("Error: Failed to open browser.");
+                PrintError("Failed to open browser.");
             }
 
             Console.WriteLine("If the link doesn't automatically open, copy and paste this link in your browser and authorize the bot:");
-            Console.WriteLine(url);
-        }
+            Console.WriteLine(authUrl);
 
 
+            // Auth Code
+            string code = GetAuthorizationCode();
 
-        private static async Task RegisterApplication()
-        {
-            Console.WriteLine("Registering bot...");
-            bool error = true;
-            ConsoleKey key;
-            do
+            // Access token
+            try
             {
-                try
-                {
-                    await _client.Apps.RegisterAsync(_config.ApplicationName, Constants.RedirectUriForClient, _scopes);
-                    error = false;
-                }
-                catch (System.Net.Http.HttpRequestException)
-                {
-                    LogError("Error: Could not connect to instance server.");
-                }
+                await manager.GetAccessToken(code);
+            }
+            catch (System.Net.Http.HttpRequestException)
+            {
+                Environment.Exit(1);
+            }
 
-                if (error == false)
-                {
-                    break;
-                }
-
-                Console.WriteLine("Try again? (Y/n): ");
-                key = Console.ReadKey().Key;
-                Console.WriteLine();
-
-                if (key == ConsoleKey.N)
-                {
-                    Console.WriteLine("Exiting...");
-                    Environment.Exit(1);
-                }
-
-            } while (true);
+            // Verify
+            if (manager.Verify())
+            {
+                manager.SaveToFile();
+                Console.WriteLine("Setup complete!");
+            }
+            else
+            {
+                PrintError("Setup failed!");
+            }
         }
 
+
+        // # User Input
         private static string GetInstanceUrl()
         {
             string input = string.Empty;
@@ -260,9 +140,9 @@ namespace ImageBot
                 input = input.Replace("https://", "");
 
                 // Validate
-                if (!string.IsNullOrEmpty(input))
+                
+                if (!string.IsNullOrEmpty(input) && Regex.Match(input, @".+\..+").Success)
                 {
-                    // TODO: and regex valid.
                     valid = true;
                 }
                 else
@@ -297,7 +177,11 @@ namespace ImageBot
                 if (string.IsNullOrEmpty(input))
                 {
                     valid = true;
-                } // TODO: else if regex
+                }
+                else if (Regex.Match(input, @"[\w-]+").Success)
+                {
+                    valid = true;
+                }
                 else
                 {
                     valid = false;
@@ -308,28 +192,60 @@ namespace ImageBot
             return input;
         }
 
-        private static void DeleteConfigFile()
+        private static string GetAuthorizationCode()
         {
-            if (File.Exists(_configFile))
+            string code = string.Empty;
+            bool valid = false;
+            do
             {
-                File.Delete(_configFile);
-            }
+                Console.Write("Code: ");
+                code = Console.ReadLine();
+
+                if (!string.IsNullOrEmpty(code) && code.Length == 43)
+                {
+                    valid = true;
+                }
+                else
+                {
+                    Console.WriteLine("Invalid code.");
+                }
+
+            } while (!valid);
+
+            return code;
         }
 
-        private static void SaveConfigFile()
+        // # Console
+        private static void PrintBanner()
         {
-            try
-            {
-                string json = JsonConvert.SerializeObject(_config);
-                File.WriteAllText(_configFile, json);
-            }
-            catch (IOException)
-            {
-                LogError("Error: Failed to save configuration to file.");
-            }
+            Console.WriteLine("#################################################");
+            Console.WriteLine("###                                           ###");
+            Console.WriteLine("###  MastodonImageBot                         ###");
+            Console.WriteLine("###  by dinomar                               ###");
+            Console.WriteLine("###  https://github/dinomar/MastodonImageBot  ###");
+            Console.WriteLine("###                                           ###");
+            Console.WriteLine("#################################################");
+            Console.WriteLine();
         }
 
-        private static void LogWarning(string message)
+
+        // # Logging
+        private static void Manager_Log(object sender, LogEventArgs e)
+        {
+            Console.WriteLine(e.Message);
+        }
+
+        private static void Manager_LogWarning(object sender, LogEventArgs e)
+        {
+            PrintWarning(e.Message);
+        }
+
+        private static void Manager_LogError(object sender, LogEventArgs e)
+        {
+            PrintError(e.Message);
+        }
+
+        private static void PrintWarning(string message)
         {
             ConsoleColor temp = Console.ForegroundColor;
             Console.ForegroundColor = ConsoleColor.Yellow;
@@ -337,19 +253,12 @@ namespace ImageBot
             Console.ForegroundColor = temp;
         }
 
-        private static void LogError(string message)
+        private static void PrintError(string message)
         {
             ConsoleColor temp = Console.ForegroundColor;
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine(message);
             Console.ForegroundColor = temp;
         }
-    }
-
-    class Config
-    {
-        public bool IsConfigured { get; set; }
-        public string Instance { get; set; } = "mstdn.jp";
-        public string ApplicationName { get; set; } = "ImageBot";
     }
 }
