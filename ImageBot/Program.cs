@@ -1,6 +1,7 @@
 ﻿using Disboard;
 using Disboard.Mastodon;
 using Disboard.Mastodon.Enums;
+using ImageBot.Configuration;
 using Newtonsoft.Json;
 using System;
 using System.Diagnostics;
@@ -15,6 +16,7 @@ namespace ImageBot
         //private static string _configFile = "config.json"; // TODO: rename? config.json credentials.json. credentials only save???
         // Add settings.json
         // stats.json
+        // TODO: argument null
 
 
         static void Main(string[] args)

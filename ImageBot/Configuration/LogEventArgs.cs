@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace ImageBot
+namespace ImageBot.Configuration
 {
     class LogEventArgs
     {

@@ -8,7 +8,7 @@ using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ImageBot
+namespace ImageBot.Configuration
 {
     class ConfigurationManager
     {
@@ -87,12 +87,12 @@ namespace ImageBot
         }
 
 
-        public static bool IsConfigured()
+        public static bool IsConfigured() // TODO
         {
             return IsConfigured(_defaultFileName);
         }
 
-        public static bool IsConfigured(string filename)
+        public static bool IsConfigured(string filename) // TODO
         {
             if (File.Exists(filename))
             {
@@ -106,12 +106,12 @@ namespace ImageBot
             return false;
         }
 
-        public static Config LoadConfigFile()
+        public static Config LoadConfigFile() // TODO
         {
             return LoadConfigFile(_defaultFileName);
         }
 
-        public static Config LoadConfigFile(string filename)
+        public static Config LoadConfigFile(string filename) // TODO
         {
             Config config = null;
 
