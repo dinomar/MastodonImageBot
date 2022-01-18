@@ -10,8 +10,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Disboard\Source\Disboard.Mastodon\Disboard.Mastodon.csproj" />
-    <ProjectReference Include="..\..\Disboard\Source\Disboard\Disboard.csproj" />
+    <ProjectReference Include="..\Disboard.Mastodon\Disboard.Mastodon.csproj" />
+    <ProjectReference Include="..\Disboard\Disboard.csproj" />
   </ItemGroup>
 
 </Project>
