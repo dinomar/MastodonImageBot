@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace ImageBot.Bot
 {
@@ -23,8 +24,7 @@ namespace ImageBot.Bot
             _client = new MastodonClient(credential);
         }
 
-
-        public void Start()
+        public async Task StartAsync()
         {
             if (!SettingsFileExits())
             {
@@ -36,11 +36,29 @@ namespace ImageBot.Bot
                 _settings = LoadSettingsFile();
             }
 
+            // Verify settings
+            // check folders exits
+            // check images in folders
 
+            // check _client not null
+            // main loop
+            await MainLoopAsync();
+        }
+
+        private async Task MainLoopAsync()
+        {
+            Console.WriteLine("Main loop");
+            var attachment = await _client.Media.CreateAsync(@"C:\Users\dinom\Pictures\img.jpg");
+            Console.WriteLine("");
         }
 
 
-        public void CreateDefaultSettingsFile()
+        public static void CreateDefaultSettingsFile()
+        {
+            CreateDefaultSettingsFile(_defaultSettingsFileName);
+        }
+
+        public static void CreateDefaultSettingsFile(string filename)
         {
             Console.WriteLine("Creating new settings file.");
             Settings settings = new Settings();
@@ -48,7 +66,7 @@ namespace ImageBot.Bot
 
             try
             {
-                File.WriteAllText(SettingsFileName, json);
+                File.WriteAllText(filename, json);
                 Console.WriteLine("New settings file created.");
             }
             catch (IOException)
@@ -58,9 +76,14 @@ namespace ImageBot.Bot
             }
         }
 
-        public bool SettingsFileExits()
+        public static bool SettingsFileExits()
         {
-            return FileHelpers.CheckSerializedFileExists<Settings>(SettingsFileName);
+            return SettingsFileExits(_defaultSettingsFileName);
+        }
+
+        public static bool SettingsFileExits(string filename)
+        {
+            return FileHelpers.CheckSerializedFileExists<Settings>(filename);
         }
 
         private Settings LoadSettingsFile()

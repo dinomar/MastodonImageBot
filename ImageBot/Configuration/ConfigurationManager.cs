@@ -87,46 +87,24 @@ namespace ImageBot.Configuration
         }
 
 
-        public static bool IsConfigured() // TODO
+        public static bool IsConfigured()
         {
             return IsConfigured(_defaultFileName);
         }
 
-        public static bool IsConfigured(string filename) // TODO
+        public static bool IsConfigured(string filename)
         {
-            if (File.Exists(filename))
-            {
-                Config _config = LoadConfigFile(filename);
-                if (_config != null && _config.IsConfigured)
-                {
-                    return true;
-                }
-            }
-
-            return false;
+            return FileHelpers.CheckSerializedFileExists<Config>(filename);
         }
 
-        public static Config LoadConfigFile() // TODO
+        public static Config LoadConfigFile()
         {
             return LoadConfigFile(_defaultFileName);
         }
 
-        public static Config LoadConfigFile(string filename) // TODO
+        public static Config LoadConfigFile(string filename)
         {
-            Config config = null;
-
-            try
-            {
-                string json = File.ReadAllText(filename);
-                config = JsonConvert.DeserializeObject<Config>(json);
-            }
-            catch (IOException)
-            {
-                Console.WriteLine("Error: Could not open file.");
-                throw;
-            }
-
-            return config;
+            return FileHelpers.LoadSerializedFile<Config>(filename);
         }
 
         public static void DeleteConfigFile()

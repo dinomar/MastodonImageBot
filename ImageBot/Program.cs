@@ -1,6 +1,7 @@
 ﻿using Disboard;
 using Disboard.Mastodon;
 using Disboard.Mastodon.Enums;
+using ImageBot.Bot;
 using ImageBot.Configuration;
 using Newtonsoft.Json;
 using System;
@@ -8,6 +9,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using static ImageBot.ConsoleHelpers;
 
 namespace ImageBot
 {
@@ -17,17 +19,35 @@ namespace ImageBot
         // Add settings.json
         // stats.json
         // TODO: argument null
+        // logger
 
 
         static void Main(string[] args)
         {
             PrintBanner();
 
-            ConfigurationManager.DeleteConfigFile(); // TODO: remove.
+            //ConfigurationManager.DeleteConfigFile(); // TODO: remove.
+
+            try
+            {
+                if (!BotManager.SettingsFileExits())
+                {
+                    PrintWarning("Settings file doesn't exist.");
+                    BotManager.CreateDefaultSettingsFile();
+                }
+            }
+            catch (IOException)
+            {
+                Environment.Exit(1);
+            }
+            
+
 
             if (ConfigurationManager.IsConfigured())
             {
-
+                Config config = ConfigurationManager.LoadConfigFile();
+                BotManager bot = new BotManager(config.Credential);
+                bot.StartAsync().Wait();
             }
             else
             {
@@ -38,17 +58,17 @@ namespace ImageBot
             Console.WriteLine("Press any key to exit.");
             Console.ReadKey();
         }
-
         
 
+        // # Setup
         private static async Task SetupAsync()
         {
             Console.WriteLine("Starting initial setup. Follow the instructions to setup bot.");
 
             // Instance Url
             Console.WriteLine();
-            ///string instanceUrl = GetInstanceUrl();
-            string instanceUrl = "mstdn.jp";
+            string instanceUrl = GetInstanceUrl();
+            ///string instanceUrl = "mstdn.jp";
 
 
             // Create Manager
@@ -60,8 +80,8 @@ namespace ImageBot
 
             // Get Application Name
             Console.WriteLine();
-            ///string applicationName = GetApplicationName();
-            string applicationName = "ImageBot";
+            string applicationName = GetApplicationName();
+            ///string applicationName = "ImageBot";
 
             // Register application
             try
@@ -108,7 +128,8 @@ namespace ImageBot
             if (manager.Verify())
             {
                 manager.SaveToFile();
-                Console.WriteLine("Setup complete!");
+                PrintSuccess("Setup complete! Edit the 'settings.json' file to your requirements then run this application again.");
+                Environment.Exit(0);
             }
             else
             {
@@ -217,6 +238,7 @@ namespace ImageBot
             return code;
         }
 
+
         // # Console
         private static void PrintBanner()
         {
@@ -245,22 +267,6 @@ namespace ImageBot
         private static void Manager_LogError(object sender, LogEventArgs e)
         {
             PrintError(e.Message);
-        }
-
-        private static void PrintWarning(string message)
-        {
-            ConsoleColor temp = Console.ForegroundColor;
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine(message);
-            Console.ForegroundColor = temp;
-        }
-
-        private static void PrintError(string message)
-        {
-            ConsoleColor temp = Console.ForegroundColor;
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine(message);
-            Console.ForegroundColor = temp;
         }
     }
 }

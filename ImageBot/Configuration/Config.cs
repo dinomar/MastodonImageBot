@@ -7,7 +7,6 @@ namespace ImageBot.Configuration
 {
     class Config
     {
-        public bool IsConfigured { get; set; }
         public string Instance { get; set; }
         public string ApplicationName { get; set; }
         public Credential Credential { get; set; }
