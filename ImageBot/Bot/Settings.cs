@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Disboard.Mastodon.Enums;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -10,5 +11,7 @@ namespace ImageBot.Bot
         public string Folder1 { get; set; } = "images1";
         public string Folder2 { get; set; } = "images2";
         public string CurrentFolder { get; set; } = "images1";
+        public VisibilityType Visibility { get; set; } = VisibilityType.Public;
+        public bool IsSensitive { get; set; } = false;
     }
 }

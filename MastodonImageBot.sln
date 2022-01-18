@@ -3,7 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.32106.194
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImageBot", "ImageBot\ImageBot.csproj", "{C9D760E9-F0A7-481C-93A6-A5C3A4F410C9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ImageBot", "ImageBot\ImageBot.csproj", "{C9D760E9-F0A7-481C-93A6-A5C3A4F410C9}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Disboard", "..\Disboard\Source\Disboard\Disboard.csproj", "{25EF9475-0EF0-4B7A-A8BD-657714D21243}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Disboard.Mastodon", "..\Disboard\Source\Disboard.Mastodon\Disboard.Mastodon.csproj", "{2F6FC993-F2FB-49A5-B661-43EA656511B9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +19,14 @@ Global
 		{C9D760E9-F0A7-481C-93A6-A5C3A4F410C9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C9D760E9-F0A7-481C-93A6-A5C3A4F410C9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C9D760E9-F0A7-481C-93A6-A5C3A4F410C9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{25EF9475-0EF0-4B7A-A8BD-657714D21243}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{25EF9475-0EF0-4B7A-A8BD-657714D21243}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{25EF9475-0EF0-4B7A-A8BD-657714D21243}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{25EF9475-0EF0-4B7A-A8BD-657714D21243}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2F6FC993-F2FB-49A5-B661-43EA656511B9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2F6FC993-F2FB-49A5-B661-43EA656511B9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2F6FC993-F2FB-49A5-B661-43EA656511B9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2F6FC993-F2FB-49A5-B661-43EA656511B9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

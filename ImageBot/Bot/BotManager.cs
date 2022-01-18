@@ -47,10 +47,25 @@ namespace ImageBot.Bot
 
         private async Task MainLoopAsync()
         {
+            Console.WriteLine("Waiting 60 minutes until next post.");
+
             Console.WriteLine("Main loop");
             var attachment = await _client.Media.CreateAsync(@"C:\Users\dinom\Pictures\img.jpg");
-            Console.WriteLine("");
+            await _client.Statuses.UpdateAsync(
+                status: "",
+                inReplyToId: null,
+                mediaIds: new List<long>() { attachment.Id },
+                isSensitive: true,
+                spoilerText: null,
+                visibility: Disboard.Mastodon.Enums.VisibilityType.Private);
+
+            Console.WriteLine("Post");
         }
+
+        // getRandomImage
+        // PostImage
+        // Move Image
+        // UpdateStats
 
 
         public static void CreateDefaultSettingsFile()

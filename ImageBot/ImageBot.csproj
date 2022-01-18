@@ -6,9 +6,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Disboard" Version="1.1.255" />
-    <PackageReference Include="Disboard.Mastodon" Version="1.1.255" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Disboard\Source\Disboard.Mastodon\Disboard.Mastodon.csproj" />
+    <ProjectReference Include="..\..\Disboard\Source\Disboard\Disboard.csproj" />
   </ItemGroup>
 
 </Project>

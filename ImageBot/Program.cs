@@ -45,6 +45,7 @@ namespace ImageBot
 
             if (ConfigurationManager.IsConfigured())
             {
+                Console.WriteLine("Starting bot...");
                 Config config = ConfigurationManager.LoadConfigFile();
                 BotManager bot = new BotManager(config.Credential);
                 bot.StartAsync().Wait();
