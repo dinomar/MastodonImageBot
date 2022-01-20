@@ -1,5 +1,6 @@
 ﻿using Disboard.Mastodon;
 using Disboard.Models;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -13,14 +14,16 @@ namespace ImageBot.Bot
     {
         private static readonly string _defaultSettingsFileName = "settings.json";
         private static readonly string _defaultStatsFileName = "stats.json";
+        private ILogger _logger;
         private MastodonClient _client;
         private Settings _settings;
 
         public string SettingsFileName { get; set; } = _defaultSettingsFileName;
         public Settings Settings { get { return _settings; } }
 
-        public BotManager(Credential credential)
+        public BotManager(ILogger logger, Credential credential)
         {
+            _logger = logger;
             _client = new MastodonClient(credential);
         }
 
@@ -28,7 +31,7 @@ namespace ImageBot.Bot
         {
             if (!SettingsFileExits())
             {
-                Console.WriteLine("Settings file doesn't exist.");
+                _logger.LogWarning("Settings file doesn't exist.");
                 CreateDefaultSettingsFile();
             }
             else
@@ -47,7 +50,7 @@ namespace ImageBot.Bot
 
         private async Task MainLoopAsync()
         {
-            Console.WriteLine("Waiting 60 minutes until next post.");
+            _logger.LogDebug("Waiting 60 minutes until next post.");
 
             Console.WriteLine("Main loop");
             var attachment = await _client.Media.CreateAsync(@"C:\Users\dinom\Pictures\img.jpg");
@@ -75,18 +78,15 @@ namespace ImageBot.Bot
 
         public static void CreateDefaultSettingsFile(string filename)
         {
-            Console.WriteLine("Creating new settings file.");
             Settings settings = new Settings();
-            string json = JsonConvert.SerializeObject(settings);
 
             try
             {
+                string json = JsonConvert.SerializeObject(settings);
                 File.WriteAllText(filename, json);
-                Console.WriteLine("New settings file created.");
             }
             catch (IOException)
             {
-                Console.WriteLine("Error: Could not create settings file.");
                 throw;
             }
         }

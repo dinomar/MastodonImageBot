@@ -10,7 +10,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using static ImageBot.ConsoleHelpers;
+using ColorConsoleLogger;
 
 namespace ImageBot
 {
@@ -22,50 +22,63 @@ namespace ImageBot
         // TODO: argument null
         // logger
 
+        private static ILoggerFactory _loggerFactory;
+        private static ILogger _logger;
 
         static void Main(string[] args)
         {
             PrintBanner();
 
             // Logging
-            ILoggerFactory loggerFactory = LoggerFactory.Create(builder =>
+            _loggerFactory = LoggerFactory.Create(builder =>
             {
                 builder.SetMinimumLevel(LogLevel.Debug);
-                builder.AddSimpleConsole(c =>
+                builder.AddColorConsoleLogger(c =>
                 {
-                    c.SingleLine = true;
+                    c.IncludeNamePrefix = false;
                 });
             });
 
-            //ILogger logger = loggerFactory.CreateLogger<Program>();
+            _logger = _loggerFactory.CreateLogger<Program>();
 
-            //ConfigurationManager.DeleteConfigFile(); // TODO: remove.
+            ConfigurationManager.DeleteConfigFile(); // TODO: remove.
 
             try
             {
                 if (!BotManager.SettingsFileExits())
                 {
-                    PrintWarning("Settings file doesn't exist.");
-                    BotManager.CreateDefaultSettingsFile();
+                    _logger.LogWarning("Settings file doesn't exist.");
+
+                    try
+                    {
+                        BotManager.CreateDefaultSettingsFile();
+                        _logger.LogInformation("Successfully created new settings file.");
+                    }
+                    catch (IOException)
+                    {
+                        _logger.LogError("Failed to create new settings file.");
+                        Environment.Exit(1);
+                    }
+                    
                 }
             }
-            catch (IOException)
+            catch (IOException ex)
             {
+                _logger.LogError(ex.Message);
                 Environment.Exit(1);
             }
-            
 
 
             if (ConfigurationManager.IsConfigured())
             {
-                Console.WriteLine("Starting bot...");
+                _logger.LogDebug("Starting bot...");
                 Config config = ConfigurationManager.LoadConfigFile();
-                BotManager bot = new BotManager(config.Credential);
+                BotManager bot = new BotManager(_loggerFactory.CreateLogger<BotManager>(), config.Credential);
                 bot.StartAsync().Wait();
             }
             else
             {
-                PrintWarning("Bot have not been configured.");
+                _logger.LogWarning("Bot have not been configured.");
                 SetupAsync().Wait();
             }
 
@@ -77,23 +90,18 @@ namespace ImageBot
         // # Setup
         private static async Task SetupAsync()
         {
-            Console.WriteLine("Starting initial setup. Follow the instructions to setup bot.");
+            _logger.LogDebug("Starting initial setup. Follow the instructions to setup bot.");
 
             // Instance Url
-            Console.WriteLine();
             string instanceUrl = GetInstanceUrl();
             ///string instanceUrl = "mstdn.jp";
 
 
             // Create Manager
-            ConfigurationManager manager = new ConfigurationManager(instanceUrl);
-            manager.Log += Manager_Log;
-            manager.LogWarning += Manager_LogWarning;
-            manager.LogError += Manager_LogError;
+            ConfigurationManager manager = new ConfigurationManager(_loggerFactory.CreateLogger<ConfigurationManager>(), instanceUrl);
 
 
             // Get Application Name
-            Console.WriteLine();
             string applicationName = GetApplicationName();
             ///string applicationName = "ImageBot";
 
@@ -118,11 +126,11 @@ namespace ImageBot
             }
             catch (System.ComponentModel.Win32Exception)
             {
-                PrintError("Failed to open browser.");
+                _logger.LogError("Failed to open browser.");
             }
 
-            Console.WriteLine("If the link doesn't automatically open, copy and paste this link in your browser and authorize the bot:");
-            Console.WriteLine(authUrl);
+            _logger.LogDebug("If the link doesn't automatically open, copy and paste this link in your browser and authorize the bot:");
+            _logger.LogDebug(authUrl);
 
 
             // Auth Code
@@ -142,12 +150,12 @@ namespace ImageBot
             if (manager.Verify())
             {
                 manager.SaveToFile();
-                PrintSuccess("Setup complete! Edit the 'settings.json' file to your requirements then run this application again.");
+                _logger.LogInformation("Setup complete! Edit the 'settings.json' file to your requirements then run this application again.");
                 Environment.Exit(0);
             }
             else
             {
-                PrintError("Setup failed!");
+                _logger.LogError("Setup failed!");
             }
         }
 
@@ -264,23 +272,6 @@ namespace ImageBot
             Console.WriteLine("###                                           ###");
             Console.WriteLine("#################################################");
             Console.WriteLine();
-        }
-
-
-        // # Logging
-        private static void Manager_Log(object sender, LogEventArgs e)
-        {
-            Console.WriteLine(e.Message);
-        }
-
-        private static void Manager_LogWarning(object sender, LogEventArgs e)
-        {
-            PrintWarning(e.Message);
-        }
-
-        private static void Manager_LogError(object sender, LogEventArgs e)
-        {
-            PrintError(e.Message);
         }
     }
 }

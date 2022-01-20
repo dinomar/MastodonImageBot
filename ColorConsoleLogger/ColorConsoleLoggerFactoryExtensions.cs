@@ -13,5 +13,21 @@ namespace ColorConsoleLogger
             builder.Services.AddSingleton<ILoggerProvider, ColorConsoleLoggerProvider>();
             return builder;
         }
+
+        public static ILoggingBuilder AddColorConsoleLogger(this ILoggingBuilder builder, Action<ColorConsoleLoggerConfiguration> configure)
+        {
+            builder.AddColorConsoleLogger();
+            builder.Services.Configure(configure);
+
+            return builder;
+        }
+
+        //public static ILoggingBuilder AddColorConsoleLogger(this ILoggingBuilder builder, Func<ColorConsoleLoggerConfiguration> configuration)
+        //{
+        //    builder.Services.AddSingleton<ILoggerProvider, ColorConsoleLoggerProvider>(p => new ColorConsoleLoggerProvider(configuration));
+        //    return builder;
+        //}
+
+
     }
 }

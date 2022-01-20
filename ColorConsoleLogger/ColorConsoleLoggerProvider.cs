@@ -29,6 +29,7 @@ namespace ColorConsoleLogger
         public void Dispose()
         {
             _loggers.Clear();
+            _onChangeToken.Dispose();
         }
     }
 }

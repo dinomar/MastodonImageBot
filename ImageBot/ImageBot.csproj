@@ -12,6 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\ColorConsoleLogger\ColorConsoleLogger.csproj" />
     <ProjectReference Include="..\Disboard.Mastodon\Disboard.Mastodon.csproj" />
     <ProjectReference Include="..\Disboard\Disboard.csproj" />
   </ItemGroup>

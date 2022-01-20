@@ -1,6 +1,7 @@
 ﻿using Disboard;
 using Disboard.Mastodon;
 using Disboard.Mastodon.Enums;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -14,6 +15,7 @@ namespace ImageBot.Configuration
     {
         private static readonly string _defaultFileName = "config.json";
         private static readonly string _defaultApplicationName = "ImageBot";
+        private ILogger _logger;
         private Config _config;
         private MastodonClient _client = null;
 
@@ -21,13 +23,9 @@ namespace ImageBot.Configuration
         public AccessScope Scopes { get; set; } = AccessScope.Read | AccessScope.Write;
 
 
-        public event EventHandler<LogEventArgs> Log;
-        public event EventHandler<LogEventArgs> LogWarning;
-        public event EventHandler<LogEventArgs> LogError;
-
-
-        public ConfigurationManager(string instanceUrl)
+        public ConfigurationManager(ILogger logger, string instanceUrl)
         {
+            _logger = logger;
             _client = new MastodonClient(instanceUrl);
 
             _config = new Config()
@@ -39,7 +37,7 @@ namespace ImageBot.Configuration
 
         public async Task RegisterApplication(string applicationName)
         {
-            OnLog("Registering bot...");
+            _logger.LogDebug("Registering bot...");
 
             _config.ApplicationName = !string.IsNullOrEmpty(applicationName) ? applicationName : _defaultApplicationName;
 
@@ -49,7 +47,7 @@ namespace ImageBot.Configuration
             }
             catch (System.Net.Http.HttpRequestException)
             {
-                OnLogError("Error: Could not connect to instance server.");
+                _logger.LogError("Error: Could not connect to instance server.");
                 throw;
             }
         }
@@ -61,7 +59,7 @@ namespace ImageBot.Configuration
 
         public async Task GetAccessToken(string code)
         {
-            OnLog("Getting access token...");
+            _logger.LogDebug("Getting access token...");
 
             try
             {
@@ -69,7 +67,7 @@ namespace ImageBot.Configuration
             }
             catch (System.Net.Http.HttpRequestException)
             {
-                OnLogError("Error: Could not connect to instance server.");
+                _logger.LogError("Error: Could not connect to instance server.");
                 throw;
             }
         }
@@ -131,25 +129,9 @@ namespace ImageBot.Configuration
             }
             catch (IOException)
             {
-                OnLogError("Error: Failed to save configuration to file.");
+                _logger.LogError("Error: Failed to save configuration to file.");
                 throw;
             }
-        }
-
-        // # Event Handlers
-        private void OnLog(string message)
-        {
-            Log?.Invoke(this, new LogEventArgs(message));
-        }
-
-        private void OnLogWarning(string message)
-        {
-            LogWarning?.Invoke(this, new LogEventArgs(message));
-        }
-
-        private void OnLogError(string message)
-        {
-            LogError?.Invoke(this, new LogEventArgs(message));
         }
     }
 }
