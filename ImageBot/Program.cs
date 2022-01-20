@@ -11,6 +11,7 @@ using System.IO;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using ColorConsoleLogger;
+using System.Threading;
 
 namespace ImageBot
 {
@@ -20,7 +21,6 @@ namespace ImageBot
         // Add settings.json
         // stats.json
         // TODO: argument null
-        // logger
 
         private static ILoggerFactory _loggerFactory;
         private static ILogger _logger;
@@ -41,7 +41,7 @@ namespace ImageBot
 
             _logger = _loggerFactory.CreateLogger<Program>();
 
-            ConfigurationManager.DeleteConfigFile(); // TODO: remove.
+            //ConfigurationManager.DeleteConfigFile(); // TODO: remove.
 
             try
             {
@@ -68,13 +68,24 @@ namespace ImageBot
                 Environment.Exit(1);
             }
 
+            CancellationTokenSource cancelTokenSource = new CancellationTokenSource();
+            //cancelTokenSource.Token
+
 
             if (ConfigurationManager.IsConfigured())
             {
                 _logger.LogDebug("Starting bot...");
                 Config config = ConfigurationManager.LoadConfigFile();
                 BotManager bot = new BotManager(_loggerFactory.CreateLogger<BotManager>(), config.Credential);
-                bot.StartAsync().Wait();
+
+                try
+                {
+                    bot.StartAsync(cancelTokenSource.Token).Wait();
+                }
+                catch (IOException)
+                {
+                    Environment.Exit(1);
+                }
             }
             else
             {
