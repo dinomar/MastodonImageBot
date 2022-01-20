@@ -3,6 +3,7 @@ using Disboard.Mastodon;
 using Disboard.Mastodon.Enums;
 using ImageBot.Bot;
 using ImageBot.Configuration;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
 using System.Diagnostics;
@@ -25,6 +26,18 @@ namespace ImageBot
         static void Main(string[] args)
         {
             PrintBanner();
+
+            // Logging
+            ILoggerFactory loggerFactory = LoggerFactory.Create(builder =>
+            {
+                builder.SetMinimumLevel(LogLevel.Debug);
+                builder.AddSimpleConsole(c =>
+                {
+                    c.SingleLine = true;
+                });
+            });
+
+            //ILogger logger = loggerFactory.CreateLogger<Program>();
 
             //ConfigurationManager.DeleteConfigFile(); // TODO: remove.
 
