@@ -50,6 +50,11 @@ namespace ImageBot.Configuration
                 _logger.LogError("Error: Could not connect to instance server.");
                 throw;
             }
+            catch (Disboard.Exceptions.DisboardException ex)
+            {
+                _logger.LogError($"Error: {ex.Message}");
+                throw;
+            }
         }
 
         public string GetAuthorizationUrl()
@@ -68,6 +73,11 @@ namespace ImageBot.Configuration
             catch (System.Net.Http.HttpRequestException)
             {
                 _logger.LogError("Error: Could not connect to instance server.");
+                throw;
+            }
+            catch (Disboard.Exceptions.DisboardException ex)
+            {
+                _logger.LogError($"Error: {ex.Message}");
                 throw;
             }
         }

@@ -17,10 +17,6 @@ namespace ImageBot
 {
     class Program
     {
-        // TODO: stats.json
-        // TODO: exit bot
-        // TODO: Disboard exception in config manager
-        // TODO: BotManager filehandle format
         // TODO: tag on instructions to files.
         // TODO: filter images
 
@@ -77,12 +73,25 @@ namespace ImageBot
             if (ConfigurationManager.IsConfigured())
             {
                 _logger.LogDebug("Starting bot...");
+                _logger.LogDebug("Press 'Esc' to exit program.");
+
                 Config config = ConfigurationManager.LoadConfigFile();
                 BotManager bot = new BotManager(_loggerFactory.CreateLogger<BotManager>(), config.Credential);
+                Task botTask = null;
 
                 try
                 {
-                    bot.StartAsync(cancelTokenSource.Token).Wait();
+                    botTask = bot.StartAsync(cancelTokenSource.Token);
+                    
+                    do
+                    {
+                        if (Console.ReadKey().Key == ConsoleKey.Escape)
+                        {
+                            cancelTokenSource.Cancel();
+                            botTask.Wait();
+                            break;
+                        }
+                    } while (true);
                 }
                 catch (IOException)
                 {
@@ -95,8 +104,8 @@ namespace ImageBot
                 SetupAsync().Wait();
             }
 
-            Console.WriteLine("Press any key to exit.");
-            Console.ReadKey();
+            //Console.WriteLine("Press any key to exit.");
+            //Console.ReadKey();
         }
         
 

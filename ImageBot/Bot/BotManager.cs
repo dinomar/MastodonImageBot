@@ -19,6 +19,7 @@ namespace ImageBot.Bot
         private Settings _settings;
         private Random _random = new Random();
         private CancellationToken _cancelToken;
+        private DateTime _nextPost;
 
         public string SettingsFileName { get; set; } = _defaultSettingsFileName;
         public Settings Settings { get { return _settings; } }
@@ -50,6 +51,7 @@ namespace ImageBot.Bot
                 return;
             }
 
+            ResetNextPostTimer();
             await MainLoopAsync(() => !_cancelToken.IsCancellationRequested);
         }
 
@@ -66,20 +68,30 @@ namespace ImageBot.Bot
                 return;
             }
 
+            ResetNextPostTimer();
             await MainLoopAsync(() => true);
         }
 
 
         private async Task MainLoopAsync(Func<bool> exitCondition)
         {
+            _logger.LogDebug($"Waiting {_settings.Interval} minutes until next post.");
+
             do
             {
-                _logger.LogDebug($"Waiting {_settings.Interval} minutes until next post.");
+                if (DateTime.Now >= _nextPost)
+                {
+                    await UploadImage();
+                    _logger.LogDebug($"Waiting {_settings.Interval} minutes until next post.");
+                }
 
-                await Task.Delay(Delay);
-
-                await UploadImage();
+                await Task.Delay(1000);
             } while (exitCondition());
+        }
+
+        private void ResetNextPostTimer()
+        {
+            _nextPost = DateTime.Now + TimeSpan.FromMinutes(_settings.Interval);
         }
 
         private async Task UploadImage()
@@ -113,7 +125,7 @@ namespace ImageBot.Bot
             }
             catch (System.Net.Http.HttpRequestException)
             {
-                _logger.LogError("Network error: Failed to image.");
+                _logger.LogError("Network error: Failed to upload image.");
             }
             catch (Disboard.Exceptions.DisboardException ex)
             {
@@ -123,6 +135,10 @@ namespace ImageBot.Bot
                     _logger.LogWarning("Increasing delay between posts by 5 minutes.");
                     _settings.Interval += 5;
                 }
+            }
+            finally
+            {
+                ResetNextPostTimer();
             }
             
             MoveFile(file);
