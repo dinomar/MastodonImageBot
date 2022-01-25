@@ -26,18 +26,34 @@ namespace ImageBot
         {
             T temp = null;
 
-            try
-            {
-                string json = File.ReadAllText(filename);
-                temp = JsonConvert.DeserializeObject<T>(json);
-            }
-            catch (IOException)
-            {
-                Console.WriteLine("Error: Could not open file.");
-                throw;
-            }
+            string json = File.ReadAllText(filename);
+            temp = JsonConvert.DeserializeObject<T>(json);
 
             return temp;
+        }
+
+        public static T CreateFileIfNotExists<T>(string filename) where T : class
+        {
+            T newObject = default(T);
+            if (!CheckSerializedFileExists<T>(filename))
+            {
+                SaveObjectToFile(filename, newObject);
+            }
+
+            return newObject;
+        }
+
+        public static T CreateNewJsonFile<T>(string filename) where T : class
+        {
+            T newObject = default(T);
+            SaveObjectToFile(filename, newObject);
+            return newObject;
+        }
+
+        public static void SaveObjectToFile(string filename, object objectToSave)
+        {
+            string json = JsonConvert.SerializeObject(objectToSave);
+            File.WriteAllText(filename, json);
         }
     }
 }

@@ -17,9 +17,10 @@ namespace ImageBot
 {
     class Program
     {
-        //private static string _configFile = "config.json"; // TODO: rename? config.json credentials.json. credentials only save???
-        // Add settings.json
-        // stats.json
+        // TODO: stats.json
+        // TODO: exit bot
+        // TODO: Disboard exception in config manager
+
 
         private static ILoggerFactory _loggerFactory;
         private static ILogger _logger;
