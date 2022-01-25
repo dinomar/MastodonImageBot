@@ -23,6 +23,7 @@ namespace ImageBot.Bot
 
         public string SettingsFileName { get; set; } = _defaultSettingsFileName;
         public Settings Settings { get { return _settings; } }
+        private int Delay { get { return _settings.Interval * 60 * 1000; } }
 
         public BotManager(ILogger logger, Credential credential)
         {
@@ -31,7 +32,6 @@ namespace ImageBot.Bot
         }
 
         // TODO: check _client not null
-        // TODO: network error
         // TODO: filter images
         // TODO: CancelToken
         // TODO: change folder, save settings
@@ -70,10 +70,9 @@ namespace ImageBot.Bot
         {
             do
             {
-                int delay = _settings.Interval * 60 * 1000;
                 _logger.LogDebug($"Waiting {_settings.Interval} minutes until next post.");
 
-                await Task.Delay(300000);
+                await Task.Delay(10000); //Delay
 
                 await UploadImage();
             } while (!_cancelToken.IsCancellationRequested);
@@ -87,20 +86,31 @@ namespace ImageBot.Bot
             }
 
             string file = GetRandomFile();
-            //string filePath = Path.Combine(_settings.CurrentFolder, file);
 
             _logger.LogDebug($"Uploading '{file}'. Visibility: {_settings.Visibility}. IsSensitive: {_settings.IsSensitive}");
 
-            var attachment = await _client.Media.CreateAsync(file);
-            await _client.Statuses.UpdateAsync(
-                status: "",
-                inReplyToId: null,
-                mediaIds: new List<long>() { attachment.Id },
-                isSensitive: _settings.IsSensitive,
-                spoilerText: null,
-                visibility: Disboard.Mastodon.Enums.VisibilityType.Private); //_settings.Visibility Remove
+            try
+            {
+                var attachment = await _client.Media.CreateAsync(file);
+                await _client.Statuses.UpdateAsync(
+                    status: "",
+                    inReplyToId: null,
+                    mediaIds: new List<long>() { attachment.Id },
+                    isSensitive: _settings.IsSensitive,
+                    spoilerText: null,
+                    visibility: Disboard.Mastodon.Enums.VisibilityType.Private); //_settings.Visibility Remove
 
-            _logger.LogInformation($"Successfully uploaded image.");
+                _logger.LogInformation($"Successfully uploaded image.");
+            }
+            catch (System.Net.Http.HttpRequestException)
+            {
+                _logger.LogError("Network error: Failed to image.");
+            }
+            catch (Disboard.Exceptions.DisboardException ex)
+            {
+                _logger.LogError($"Error: {ex.Message}");
+            }
+            
             //_logger.LogDebug("Moving image to deposit folder.");
             MoveFile(file);
         }
