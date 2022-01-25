@@ -20,6 +20,8 @@ namespace ImageBot
         // TODO: stats.json
         // TODO: exit bot
         // TODO: Disboard exception in config manager
+        // TODO: BotManager filehandle format
+        // TODO: tag on instructions to files.
 
 
         private static ILoggerFactory _loggerFactory;

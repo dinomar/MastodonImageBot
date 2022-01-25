@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace ImageBot.Stats
+namespace ImageBot
 {
     class Stats
     {
-        public int Posts { get; private set; }
+        public int Posts { get; set; }
 
         public void IncrementPosts()
         {

@@ -32,22 +32,21 @@ namespace ImageBot
             return temp;
         }
 
-        public static T CreateFileIfNotExists<T>(string filename) where T : class
+        public static T CreateFileIfNotExists<T>(string filename, T objectToCreate) where T : class
         {
-            T newObject = default(T);
+
             if (!CheckSerializedFileExists<T>(filename))
             {
-                SaveObjectToFile(filename, newObject);
+                SaveObjectToFile(filename, objectToCreate);
             }
 
-            return newObject;
+            return objectToCreate;
         }
 
-        public static T CreateNewJsonFile<T>(string filename) where T : class
+        public static T CreateNewJsonFile<T>(string filename, T objectToCreate) where T : class
         {
-            T newObject = default(T);
-            SaveObjectToFile(filename, newObject);
-            return newObject;
+            SaveObjectToFile(filename, objectToCreate);
+            return objectToCreate;
         }
 
         public static void SaveObjectToFile(string filename, object objectToSave)

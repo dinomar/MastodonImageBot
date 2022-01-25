@@ -35,8 +35,6 @@ namespace ImageBot.Bot
         }
 
         // TODO: filter images
-        // TODO: CancelToken
-        // TODO: without canceltoken
 
         public async Task StartAsync(CancellationToken cancelToken)
         {
@@ -80,7 +78,7 @@ namespace ImageBot.Bot
             {
                 _logger.LogDebug($"Waiting {_settings.Interval} minutes until next post.");
 
-                await Task.Delay(10000); //Delay
+                await Task.Delay(Delay);
 
                 await UploadImage();
             } while (exitCondition());
@@ -108,7 +106,12 @@ namespace ImageBot.Bot
                     spoilerText: null,
                     visibility: Disboard.Mastodon.Enums.VisibilityType.Private); //_settings.Visibility Remove
 
-                _logger.LogInformation($"Successfully uploaded image.");
+                Stats stats = StatsManager.GetStats();
+                stats.IncrementPosts();
+
+                _logger.LogInformation($"Successfully uploaded image. Posts made: {stats?.Posts}");
+
+                StatsManager.SaveStats(stats);
             }
             catch (System.Net.Http.HttpRequestException)
             {
@@ -117,6 +120,11 @@ namespace ImageBot.Bot
             catch (Disboard.Exceptions.DisboardException ex)
             {
                 _logger.LogError($"Error: {ex.Message}");
+                if (ex.Message == "Too many requests")
+                {
+                    _logger.LogWarning("Increasing delay between posts by 5 minutes.");
+                    _settings.Interval += 5;
+                }
             }
             
             MoveFile(file);

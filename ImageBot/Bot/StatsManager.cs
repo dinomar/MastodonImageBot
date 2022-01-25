@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
-namespace ImageBot.Stats
+namespace ImageBot
 {
     static class StatsManager
     {
@@ -14,7 +14,8 @@ namespace ImageBot.Stats
         {
             if (!FileHelpers.CheckSerializedFileExists<Stats>(_defaultFileName))
             {
-                return FileHelpers.CreateNewJsonFile<Stats>(_defaultFileName);
+                Console.WriteLine("Create new file");
+                return FileHelpers.CreateNewJsonFile<Stats>(_defaultFileName, new Stats());
             }
             else
             {
@@ -24,7 +25,7 @@ namespace ImageBot.Stats
 
         public static void CreateNewStatsFile()
         {
-            FileHelpers.CreateFileIfNotExists<Stats>(_defaultFileName);
+            FileHelpers.CreateFileIfNotExists<Stats>(_defaultFileName, new Stats());
         }
 
         public static void SaveStats(Stats stats)
