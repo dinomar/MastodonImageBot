@@ -22,7 +22,7 @@ namespace ImageBot
         // TODO: Disboard exception in config manager
         // TODO: BotManager filehandle format
         // TODO: tag on instructions to files.
-
+        // TODO: filter images
 
         private static ILoggerFactory _loggerFactory;
         private static ILogger _logger;

@@ -14,7 +14,6 @@ namespace ImageBot.Bot
     class BotManager
     {
         private static readonly string _defaultSettingsFileName = "settings.json";
-        private static readonly string _defaultStatsFileName = "stats.json";
         private ILogger _logger;
         private MastodonClient _client;
         private Settings _settings;
@@ -33,8 +32,7 @@ namespace ImageBot.Bot
             _logger = logger;
             _client = new MastodonClient(credential);
         }
-
-        // TODO: filter images
+        
 
         public async Task StartAsync(CancellationToken cancelToken)
         {
@@ -104,7 +102,7 @@ namespace ImageBot.Bot
                     mediaIds: new List<long>() { attachment.Id },
                     isSensitive: _settings.IsSensitive,
                     spoilerText: null,
-                    visibility: Disboard.Mastodon.Enums.VisibilityType.Private); //_settings.Visibility Remove
+                    visibility: _settings.Visibility);
 
                 Stats stats = StatsManager.GetStats();
                 stats.IncrementPosts();
@@ -155,26 +153,12 @@ namespace ImageBot.Bot
         public static void CreateDefaultSettingsFile(string filename)
         {
             Settings settings = new Settings();
-
-            SaveSettingsFile(filename, settings);
+            FileHelpers.SaveObjectToFile(filename, settings);
         }
 
         private void SaveSettings()
         {
-            SaveSettingsFile(_defaultSettingsFileName, _settings);
-        }
-
-        private static void SaveSettingsFile(string filename, Settings settings)
-        {
-            try
-            {
-                string json = JsonConvert.SerializeObject(settings);
-                File.WriteAllText(filename, json);
-            }
-            catch (IOException)
-            {
-                throw;
-            }
+            FileHelpers.SaveObjectToFile(_defaultSettingsFileName, _settings);
         }
 
         public static bool SettingsFileExits()
