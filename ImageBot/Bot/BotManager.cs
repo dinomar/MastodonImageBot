@@ -27,46 +27,54 @@ namespace ImageBot.Bot
 
         public BotManager(ILogger logger, Credential credential)
         {
+            if (logger == null) { throw new ArgumentNullException(paramName: nameof(logger)); }
+            if (credential == null) { throw new ArgumentNullException(paramName: nameof(credential)); }
+
             _logger = logger;
             _client = new MastodonClient(credential);
         }
 
-        // TODO: check _client not null
         // TODO: filter images
         // TODO: CancelToken
-        // TODO: change folder, save settings
+        // TODO: without canceltoken
 
         public async Task StartAsync(CancellationToken cancelToken)
         {
+            if (cancelToken == null) { throw new ArgumentNullException(paramName: nameof(cancelToken)); }
             _cancelToken = cancelToken;
 
-            if (!SettingsFileExits())
-            {
-                _logger.LogWarning("Settings file doesn't exist.");
-                CreateDefaultSettingsFile();
-            }
-            else
-            {
-                _settings = LoadSettingsFile();
-            }
-
-            // Verify settings
-            CreateDirectory(_settings.Folder1);
-            CreateDirectory(_settings.Folder2);
+            VerifySettings();
+          
+            VerifyOrCreateDirectory(_settings.Folder1);
+            VerifyOrCreateDirectory(_settings.Folder2);
 
             if (DirectoryEmpty(_settings.Folder1) && DirectoryEmpty(_settings.Folder2))
             {
-                _logger.LogWarning("No images found. Exiting program...");
+                _logger.LogWarning("Image folders empty. No images found to post. Exiting program...");
                 return;
             }
 
-            if (_settings.Interval <= 0) { _settings.Interval = 60; }
+            await MainLoopAsync(() => !_cancelToken.IsCancellationRequested);
+        }
 
-            await MainLoopAsync();
+        public async Task StartAsync()
+        {
+            VerifySettings();
+
+            VerifyOrCreateDirectory(_settings.Folder1);
+            VerifyOrCreateDirectory(_settings.Folder2);
+
+            if (DirectoryEmpty(_settings.Folder1) && DirectoryEmpty(_settings.Folder2))
+            {
+                _logger.LogWarning("Image folders empty. No images found to post. Exiting program...");
+                return;
+            }
+
+            await MainLoopAsync(() => true);
         }
 
 
-        private async Task MainLoopAsync()
+        private async Task MainLoopAsync(Func<bool> exitCondition)
         {
             do
             {
@@ -75,7 +83,7 @@ namespace ImageBot.Bot
                 await Task.Delay(10000); //Delay
 
                 await UploadImage();
-            } while (!_cancelToken.IsCancellationRequested);
+            } while (exitCondition());
         }
 
         private async Task UploadImage()
@@ -111,8 +119,23 @@ namespace ImageBot.Bot
                 _logger.LogError($"Error: {ex.Message}");
             }
             
-            //_logger.LogDebug("Moving image to deposit folder.");
             MoveFile(file);
+        }
+
+
+        private void VerifySettings()
+        {
+            if (!SettingsFileExits())
+            {
+                _logger.LogWarning("Settings file doesn't exist.");
+                CreateDefaultSettingsFile();
+            }
+            else
+            {
+                _settings = LoadSettingsFile();
+            }
+
+            if (_settings.Interval <= 0) { _settings.Interval = 60; }
         }
 
 
@@ -125,6 +148,16 @@ namespace ImageBot.Bot
         {
             Settings settings = new Settings();
 
+            SaveSettingsFile(filename, settings);
+        }
+
+        private void SaveSettings()
+        {
+            SaveSettingsFile(_defaultSettingsFileName, _settings);
+        }
+
+        private static void SaveSettingsFile(string filename, Settings settings)
+        {
             try
             {
                 string json = JsonConvert.SerializeObject(settings);
@@ -168,6 +201,8 @@ namespace ImageBot.Bot
             {
                 _settings.CurrentFolder = _settings.Folder1;
             }
+
+            SaveSettings();
         }
 
         private void MoveFile(string filename)
@@ -202,7 +237,7 @@ namespace ImageBot.Bot
             return false;
         }
 
-        private void CreateDirectory(string directory)
+        private void VerifyOrCreateDirectory(string directory)
         {
             try
             {

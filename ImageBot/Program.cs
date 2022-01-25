@@ -20,7 +20,6 @@ namespace ImageBot
         //private static string _configFile = "config.json"; // TODO: rename? config.json credentials.json. credentials only save???
         // Add settings.json
         // stats.json
-        // TODO: argument null
 
         private static ILoggerFactory _loggerFactory;
         private static ILogger _logger;
