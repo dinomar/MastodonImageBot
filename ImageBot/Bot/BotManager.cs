@@ -22,9 +22,7 @@ namespace ImageBot.Bot
         private DateTime _nextPost;
         private Stats _stats;
 
-        public string SettingsFileName { get; set; } = _defaultSettingsFileName;
         public Settings Settings { get { return _settings; } }
-        private int Delay { get { return _settings.Interval * 60 * 1000; } }
 
         public BotManager(ILogger logger, Credential credential)
         {
@@ -136,7 +134,7 @@ namespace ImageBot.Bot
                 ResetNextPostTimer();
             }
             
-            MoveFile(file);
+            MoveFileToDepositFolder(file);
         }
 
 
@@ -158,13 +156,8 @@ namespace ImageBot.Bot
 
         public static void CreateDefaultSettingsFile()
         {
-            CreateDefaultSettingsFile(_defaultSettingsFileName);
-        }
-
-        public static void CreateDefaultSettingsFile(string filename)
-        {
             Settings settings = new Settings();
-            FileHelpers.SaveObjectToFile(filename, settings);
+            FileHelpers.SaveObjectToFile(_defaultSettingsFileName, settings);
         }
 
         private void SaveSettings()
@@ -174,17 +167,12 @@ namespace ImageBot.Bot
 
         public static bool SettingsFileExits()
         {
-            return SettingsFileExits(_defaultSettingsFileName);
-        }
-
-        public static bool SettingsFileExits(string filename)
-        {
-            return FileHelpers.SerializedFileExists<Settings>(filename);
+            return FileHelpers.SerializedFileExists<Settings>(_defaultSettingsFileName);
         }
 
         private Settings LoadSettingsFile()
         {
-            return FileHelpers.LoadSerializedFile<Settings>(SettingsFileName);
+            return FileHelpers.LoadSerializedFile<Settings>(_defaultSettingsFileName);
         }
 
 
@@ -208,7 +196,7 @@ namespace ImageBot.Bot
             SaveSettings();
         }
 
-        private void MoveFile(string filename)
+        private void MoveFileToDepositFolder(string filename)
         {
             if (File.Exists(filename))
             {

@@ -52,7 +52,7 @@ namespace ImageBot
 
         public static void SaveObjectToFile(string filename, object objectToSave)
         {
-            string json = JsonConvert.SerializeObject(objectToSave);
+            string json = JsonConvert.SerializeObject(objectToSave, Formatting.Indented);
             File.WriteAllText(filename, json);
         }
 

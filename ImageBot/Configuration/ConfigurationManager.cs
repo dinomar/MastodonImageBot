@@ -19,7 +19,6 @@ namespace ImageBot.Configuration
         private Config _config;
         private MastodonClient _client = null;
 
-        public string FileName { get; set; } = _defaultFileName;
         public AccessScope Scopes { get; set; } = AccessScope.Read | AccessScope.Write;
 
 
@@ -107,45 +106,21 @@ namespace ImageBot.Configuration
 
         public static bool IsConfigured()
         {
-            return IsConfigured(_defaultFileName);
-        }
-
-        public static bool IsConfigured(string filename)
-        {
-            return FileHelpers.SerializedFileExists<Config>(filename);
+            return FileHelpers.SerializedFileExists<Config>(_defaultFileName);
         }
 
         public static Config LoadConfigFile()
         {
-            return LoadConfigFile(_defaultFileName);
-        }
-
-        public static Config LoadConfigFile(string filename)
-        {
-            return FileHelpers.LoadSerializedFile<Config>(filename);
-        }
-
-        public static void DeleteConfigFile()
-        {
-            DeleteConfigFile(_defaultFileName);
-        }
-
-        public static void DeleteConfigFile(string filename)
-        {
-            if (File.Exists(filename))
-            {
-                File.Delete(filename);
-            }
+            return FileHelpers.LoadSerializedFile<Config>(_defaultFileName);
         }
 
         public void SaveToFile()
         {
             _config.Credential = _client.Credential;
-
+            
             try
             {
-                string json = JsonConvert.SerializeObject(_config);
-                File.WriteAllText(FileName, json);
+                FileHelpers.SaveObjectToFile(_defaultFileName, _config);
             }
             catch (IOException)
             {

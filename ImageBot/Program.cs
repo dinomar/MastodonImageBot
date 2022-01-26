@@ -21,10 +21,6 @@ namespace ImageBot
         // TODO: Readme
         // TODO: Test | win linux
 
-        // Interval: Time between post in minutes
-        // Visibility: Public = 0, Private = 2, Unlisted = 1, Direct = 3.
-        // IsSensitive: Mark post as sensitive. 'true' or 'false'.
-
         private static ILoggerFactory _loggerFactory;
         private static ILogger _logger;
 
@@ -41,38 +37,20 @@ namespace ImageBot
                     c.IncludeNamePrefix = false;
                 });
             });
-
             _logger = _loggerFactory.CreateLogger<Program>();
 
-            //ConfigurationManager.DeleteConfigFile(); // TODO: remove.
 
             try
             {
-                if (!BotManager.SettingsFileExits())
-                {
-                    _logger.LogWarning("Settings file doesn't exist.");
-
-                    try
-                    {
-                        BotManager.CreateDefaultSettingsFile();
-                        _logger.LogInformation("Successfully created new settings file.");
-                    }
-                    catch (IOException)
-                    {
-                        _logger.LogError("Failed to create new settings file.");
-                        Environment.Exit(1);
-                    }
-                    
-                }
+                CheckSettingsFileExists();
             }
-            catch (IOException ex)
+            catch (Exception)
             {
-                _logger.LogError(ex.Message);
                 Environment.Exit(1);
             }
 
-            CancellationTokenSource cancelTokenSource = new CancellationTokenSource();
 
+            CancellationTokenSource cancelTokenSource = new CancellationTokenSource();
             if (ConfigurationManager.IsConfigured())
             {
                 _logger.LogDebug("Starting bot...");
@@ -96,7 +74,7 @@ namespace ImageBot
                         }
                     } while (true);
                 }
-                catch (IOException)
+                catch (Exception)
                 {
                     Environment.Exit(1);
                 }
@@ -104,10 +82,11 @@ namespace ImageBot
             else
             {
                 _logger.LogWarning("Bot have not been configured.");
+                // Run Setup
                 SetupAsync().Wait();
             }
         }
-        
+
 
         // # Setup
         private static async Task SetupAsync()
@@ -302,6 +281,33 @@ namespace ImageBot
             catch (IOException ex)
             {
                 _logger.LogError($"Failed to create default settings file. Error: {ex.Message}");
+                throw;
+            }
+        }
+
+        private static void CheckSettingsFileExists()
+        {
+            try
+            {
+                if (!BotManager.SettingsFileExits())
+                {
+                    _logger.LogWarning("Settings file doesn't exist.");
+
+                    try
+                    {
+                        BotManager.CreateDefaultSettingsFile();
+                        _logger.LogInformation("Successfully created new settings file.");
+                    }
+                    catch (IOException)
+                    {
+                        _logger.LogError("Failed to create new settings file.");
+                        throw;
+                    }
+                }
+            }
+            catch (IOException ex)
+            {
+                _logger.LogError($"Error: {ex.Message}");
                 throw;
             }
         }
