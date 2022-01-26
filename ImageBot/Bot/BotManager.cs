@@ -41,6 +41,18 @@ namespace ImageBot.Bot
             if (cancelToken == null) { throw new ArgumentNullException(paramName: nameof(cancelToken)); }
             _cancelToken = cancelToken;
 
+            InitializationAndChecks();
+            await MainLoopAsync(() => !_cancelToken.IsCancellationRequested);
+        }
+
+        public async Task StartAsync()
+        {
+            InitializationAndChecks();
+            await MainLoopAsync(() => true);
+        }
+
+        private void InitializationAndChecks()
+        {
             VerifySettings();
 
             FileHelpers.CreateDirectoriesIfNotExist(new string[] { _settings.Folder1, _settings.Folder2 }, _logger);
@@ -54,23 +66,6 @@ namespace ImageBot.Bot
             _stats = Stats.Instance;
 
             ResetNextPostTimer();
-            await MainLoopAsync(() => !_cancelToken.IsCancellationRequested);
-        }
-
-        public async Task StartAsync()
-        {
-            VerifySettings();
-
-            FileHelpers.CreateDirectoriesIfNotExist(new string[] { _settings.Folder1, _settings.Folder2 }, _logger);
-
-            if (FileHelpers.IsDirectoryEmpty(_settings.Folder1) && FileHelpers.IsDirectoryEmpty(_settings.Folder2))
-            {
-                _logger.LogWarning("Image folders empty. No images found to post. Exiting program...");
-                return;
-            }
-
-            ResetNextPostTimer();
-            await MainLoopAsync(() => true);
         }
 
 
@@ -215,7 +210,6 @@ namespace ImageBot.Bot
 
         private void MoveFile(string filename)
         {
-            //string oldPath = Path.Combine(_settings.CurrentFolder, filename);
             if (File.Exists(filename))
             {
                 string newPath = Path.Combine(_settings.DepositFolder, Path.GetFileName(filename));

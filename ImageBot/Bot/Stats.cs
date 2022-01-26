@@ -45,14 +45,4 @@ namespace ImageBot
             FileHelpers.SaveObjectToFile(_defaultFileName, this);
         }
     }
-
-    class Stats2
-    {
-        public int Posts { get; set; }
-
-        public void IncrementPosts()
-        {
-            Posts++;
-        }
-    }
 }
