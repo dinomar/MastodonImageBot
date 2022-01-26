@@ -20,6 +20,7 @@ namespace ImageBot.Bot
         private Random _random = new Random();
         private CancellationToken _cancelToken;
         private DateTime _nextPost;
+        private Stats _stats;
 
         public string SettingsFileName { get; set; } = _defaultSettingsFileName;
         public Settings Settings { get { return _settings; } }
@@ -41,15 +42,16 @@ namespace ImageBot.Bot
             _cancelToken = cancelToken;
 
             VerifySettings();
-          
-            VerifyOrCreateDirectory(_settings.Folder1);
-            VerifyOrCreateDirectory(_settings.Folder2);
 
-            if (DirectoryEmpty(_settings.Folder1) && DirectoryEmpty(_settings.Folder2))
+            FileHelpers.CreateDirectoriesIfNotExist(new string[] { _settings.Folder1, _settings.Folder2 }, _logger);
+
+            if (FileHelpers.IsDirectoryEmpty(_settings.Folder1) && FileHelpers.IsDirectoryEmpty(_settings.Folder2))
             {
                 _logger.LogWarning("Image folders empty. No images found to post. Exiting program...");
                 return;
             }
+
+            _stats = Stats.Instance;
 
             ResetNextPostTimer();
             await MainLoopAsync(() => !_cancelToken.IsCancellationRequested);
@@ -59,10 +61,9 @@ namespace ImageBot.Bot
         {
             VerifySettings();
 
-            VerifyOrCreateDirectory(_settings.Folder1);
-            VerifyOrCreateDirectory(_settings.Folder2);
+            FileHelpers.CreateDirectoriesIfNotExist(new string[] { _settings.Folder1, _settings.Folder2 }, _logger);
 
-            if (DirectoryEmpty(_settings.Folder1) && DirectoryEmpty(_settings.Folder2))
+            if (FileHelpers.IsDirectoryEmpty(_settings.Folder1) && FileHelpers.IsDirectoryEmpty(_settings.Folder2))
             {
                 _logger.LogWarning("Image folders empty. No images found to post. Exiting program...");
                 return;
@@ -96,7 +97,7 @@ namespace ImageBot.Bot
 
         private async Task UploadImage()
         {
-            if (DirectoryEmpty(_settings.CurrentFolder))
+            if (FileHelpers.IsDirectoryEmpty(_settings.CurrentFolder))
             {
                 SwitchCurrentDirectories();
             }
@@ -116,12 +117,11 @@ namespace ImageBot.Bot
                     spoilerText: null,
                     visibility: _settings.Visibility);
 
-                Stats stats = StatsManager.GetStats();
-                stats.IncrementPosts();
+                _stats.IncrementPosts();
 
-                _logger.LogInformation($"Successfully uploaded image. Posts made: {stats?.Posts}");
+                _logger.LogInformation($"Successfully uploaded image. Posts made: {_stats?.Posts}");
 
-                StatsManager.SaveStats(stats);
+                _stats.Save();
             }
             catch (System.Net.Http.HttpRequestException)
             {
@@ -184,7 +184,7 @@ namespace ImageBot.Bot
 
         public static bool SettingsFileExits(string filename)
         {
-            return FileHelpers.CheckSerializedFileExists<Settings>(filename);
+            return FileHelpers.SerializedFileExists<Settings>(filename);
         }
 
         private Settings LoadSettingsFile()
@@ -232,35 +232,6 @@ namespace ImageBot.Bot
             else
             {
                 _logger.LogError($"Could not move file '{filename}'. File doesn't exist.");
-            }
-        }
-
-        private bool DirectoryEmpty(string directory)
-        {
-            if (Directory.Exists(directory) && Directory.GetFiles(directory).Length == 0)
-            {
-                return true;
-            }
-
-            return false;
-        }
-
-        private void VerifyOrCreateDirectory(string directory)
-        {
-            try
-            {
-                if (!Directory.Exists(directory))
-                {
-                    _logger.LogWarning($"'{directory}' folder doesn't exist.");
-                    _logger.LogDebug($"Creating '{directory}' directory.");
-                    Directory.CreateDirectory(directory);
-                    _logger.LogDebug($"Created '{directory}' directory.");
-                }
-            }
-            catch (IOException)
-            {
-                _logger.LogError($"Failed to create '{directory}' directory.");
-                throw;
             }
         }
     }

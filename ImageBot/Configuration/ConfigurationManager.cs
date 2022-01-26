@@ -102,7 +102,7 @@ namespace ImageBot.Configuration
 
         public static bool IsConfigured(string filename)
         {
-            return FileHelpers.CheckSerializedFileExists<Config>(filename);
+            return FileHelpers.SerializedFileExists<Config>(filename);
         }
 
         public static Config LoadConfigFile()

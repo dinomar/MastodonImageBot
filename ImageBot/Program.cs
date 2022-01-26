@@ -18,7 +18,14 @@ namespace ImageBot
     class Program
     {
         // TODO: tag on instructions to files.
-        // TODO: filter images
+        // TODO: filter images, image in dir
+        // TODO: Readme
+        // TODO: Test | win linux
+        // TODO: Create folders at config *
+        // TODO: Add config finish text to add images to folders and config visibility, delay
+        // TODO: fix double start
+        // TODO: add catch, log exception to configmanager | fix exceptions in setup
+        // TODO: redo stats, singleton
 
         private static ILoggerFactory _loggerFactory;
         private static ILogger _logger;
@@ -67,8 +74,6 @@ namespace ImageBot
             }
 
             CancellationTokenSource cancelTokenSource = new CancellationTokenSource();
-            //cancelTokenSource.Token
-
 
             if (ConfigurationManager.IsConfigured())
             {
@@ -103,9 +108,6 @@ namespace ImageBot
                 _logger.LogWarning("Bot have not been configured.");
                 SetupAsync().Wait();
             }
-
-            //Console.WriteLine("Press any key to exit.");
-            //Console.ReadKey();
         }
         
 
@@ -113,6 +115,31 @@ namespace ImageBot
         private static async Task SetupAsync()
         {
             _logger.LogDebug("Starting initial setup. Follow the instructions to setup bot.");
+
+            // Create default image folders
+            try
+            {
+                _logger.LogDebug("Creating default image folders.");
+                Settings settings = new Settings();
+                FileHelpers.CreateDirectoriesIfNotExist(new string[] { settings.Folder1, settings.Folder2 }, _logger);
+            }
+            catch (IOException ex)
+            {
+                _logger.LogError($"Failed to create directories. Error: {ex.Message}");
+                Environment.Exit(1);
+            }
+
+            // Create default settings file
+            try
+            {
+                BotManager.CreateDefaultSettingsFile();
+                _logger.LogDebug("Successfully created new settings file.");
+            }
+            catch (IOException ex)
+            {
+                _logger.LogError($"Failed to create default settings file. Error: {ex.Message}");
+                Environment.Exit(1);
+            }
 
             // Instance Url
             string instanceUrl = GetInstanceUrl();
@@ -132,7 +159,7 @@ namespace ImageBot
             {
                 await manager.RegisterApplication(applicationName);
             }
-            catch (System.Net.Http.HttpRequestException)
+            catch (Exception)
             {
                 Environment.Exit(1);
             }
@@ -163,7 +190,7 @@ namespace ImageBot
             {
                 await manager.GetAccessToken(code);
             }
-            catch (System.Net.Http.HttpRequestException)
+            catch (Exception)
             {
                 Environment.Exit(1);
             }

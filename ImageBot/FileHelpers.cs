@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -8,7 +9,7 @@ namespace ImageBot
 {
     static class FileHelpers
     {
-        public static bool CheckSerializedFileExists<T>(string filename) where T : class
+        public static bool SerializedFileExists<T>(string filename) where T : class
         {
             if (File.Exists(filename))
             {
@@ -35,7 +36,7 @@ namespace ImageBot
         public static T CreateFileIfNotExists<T>(string filename, T objectToCreate) where T : class
         {
 
-            if (!CheckSerializedFileExists<T>(filename))
+            if (!SerializedFileExists<T>(filename))
             {
                 SaveObjectToFile(filename, objectToCreate);
             }
@@ -53,6 +54,45 @@ namespace ImageBot
         {
             string json = JsonConvert.SerializeObject(objectToSave);
             File.WriteAllText(filename, json);
+        }
+
+        public static void CreateDirectoriesIfNotExist(string[] directories, ILogger logger = null)
+        {
+            if (directories == null) { throw new ArgumentNullException(paramName: nameof(directories)); }
+
+            foreach (string dir in directories)
+            {
+                CreateDirectoryIfNotExist(dir, logger);
+            }
+        }
+
+        public static void CreateDirectoryIfNotExist(string directory, ILogger logger = null)
+        {
+            try
+            {
+                if (!Directory.Exists(directory))
+                {
+                    logger?.LogWarning($"'{directory}' folder doesn't exist.");
+                    logger?.LogDebug($"Creating '{directory}' directory.");
+                    Directory.CreateDirectory(directory);
+                    logger?.LogDebug($"Created '{directory}' directory.");
+                }
+            }
+            catch (IOException)
+            {
+                logger?.LogError($"Failed to create '{directory}' directory.");
+                throw;
+            }
+        }
+
+        public static bool IsDirectoryEmpty(string directory)
+        {
+            if (Directory.Exists(directory) && Directory.GetFiles(directory).Length == 0)
+            {
+                return true;
+            }
+
+            return false;
         }
     }
 }
