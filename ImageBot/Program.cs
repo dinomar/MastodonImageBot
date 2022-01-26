@@ -17,11 +17,13 @@ namespace ImageBot
 {
     class Program
     {
-        // TODO: tag on instructions to files.
         // TODO: filter images, image in dir
         // TODO: Readme
         // TODO: Test | win linux
-        // TODO: Add config finish text to add images to folders and config visibility, delay
+
+        // Interval: Time between post in minutes
+        // Visibility: Public = 0, Private = 2, Unlisted = 1, Direct = 3.
+        // IsSensitive: Mark post as sensitive. 'true' or 'false'.
 
         private static ILoggerFactory _loggerFactory;
         private static ILogger _logger;
@@ -160,7 +162,7 @@ namespace ImageBot
                 if (manager.Verify())
                 {
                     manager.SaveToFile();
-                    _logger.LogInformation("Setup complete! Edit the 'settings.json' file to your requirements then run this application again.");
+                    _logger.LogInformation("Setup complete! You can now copy your images into the 'images1' folder. And edit the 'settings.json' file to meet your requirements. When your done, run this application again.");
                     Environment.Exit(0);
                 }
                 else
