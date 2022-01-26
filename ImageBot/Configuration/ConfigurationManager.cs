@@ -55,6 +55,11 @@ namespace ImageBot.Configuration
                 _logger.LogError($"Error: {ex.Message}");
                 throw;
             }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error: {ex.Message}");
+                throw;
+            }
         }
 
         public string GetAuthorizationUrl()
@@ -76,6 +81,11 @@ namespace ImageBot.Configuration
                 throw;
             }
             catch (Disboard.Exceptions.DisboardException ex)
+            {
+                _logger.LogError($"Error: {ex.Message}");
+                throw;
+            }
+            catch (Exception ex)
             {
                 _logger.LogError($"Error: {ex.Message}");
                 throw;

@@ -21,11 +21,7 @@ namespace ImageBot
         // TODO: filter images, image in dir
         // TODO: Readme
         // TODO: Test | win linux
-        // TODO: Create folders at config *
         // TODO: Add config finish text to add images to folders and config visibility, delay
-        // TODO: fix double start
-        // TODO: add catch, log exception to configmanager | fix exceptions in setup
-        // TODO: redo stats, singleton
 
         private static ILoggerFactory _loggerFactory;
         private static ILogger _logger;
@@ -116,95 +112,65 @@ namespace ImageBot
         {
             _logger.LogDebug("Starting initial setup. Follow the instructions to setup bot.");
 
-            // Create default image folders
             try
             {
-                _logger.LogDebug("Creating default image folders.");
-                Settings settings = new Settings();
-                FileHelpers.CreateDirectoriesIfNotExist(new string[] { settings.Folder1, settings.Folder2 }, _logger);
-            }
-            catch (IOException ex)
-            {
-                _logger.LogError($"Failed to create directories. Error: {ex.Message}");
-                Environment.Exit(1);
-            }
+                // Create default image folders
+                CreateDefaultImageFolders();
 
-            // Create default settings file
-            try
-            {
-                BotManager.CreateDefaultSettingsFile();
-                _logger.LogDebug("Successfully created new settings file.");
-            }
-            catch (IOException ex)
-            {
-                _logger.LogError($"Failed to create default settings file. Error: {ex.Message}");
-                Environment.Exit(1);
-            }
+                // Create default settings file
+                CreateDefaultSettingsFile();
 
-            // Instance Url
-            string instanceUrl = GetInstanceUrl();
-            ///string instanceUrl = "mstdn.jp";
+                // Instance Url
+                string instanceUrl = GetInstanceUrl();
 
+                // Create Manager
+                ConfigurationManager manager = new ConfigurationManager(_loggerFactory.CreateLogger<ConfigurationManager>(), instanceUrl);
 
-            // Create Manager
-            ConfigurationManager manager = new ConfigurationManager(_loggerFactory.CreateLogger<ConfigurationManager>(), instanceUrl);
+                // Get Application Name
+                string applicationName = GetApplicationName();
 
-
-            // Get Application Name
-            string applicationName = GetApplicationName();
-            ///string applicationName = "ImageBot";
-
-            // Register application
-            try
-            {
+                // Register application
                 await manager.RegisterApplication(applicationName);
-            }
-            catch (Exception)
-            {
-                Environment.Exit(1);
-            }
 
 
-            // Get Auth Url
-            string authUrl = manager.GetAuthorizationUrl();
+                // Get Auth Url
+                string authUrl = manager.GetAuthorizationUrl();
 
-            // Open in browser
-            try
-            {
-                Process.Start(authUrl);
-            }
-            catch (System.ComponentModel.Win32Exception)
-            {
-                _logger.LogError("Failed to open browser.");
-            }
+                // Open in browser
+                try
+                {
+                    Process.Start(authUrl);
+                }
+                catch (System.ComponentModel.Win32Exception)
+                {
+                    _logger.LogError("Failed to open browser.");
+                }
 
-            _logger.LogDebug("If the link doesn't automatically open, copy and paste this link in your browser and authorize the bot:");
-            _logger.LogDebug(authUrl);
+                _logger.LogDebug("If the link doesn't automatically open, copy and paste this link in your browser and authorize the bot:");
+                _logger.LogDebug(authUrl);
 
 
-            // Auth Code
-            string code = GetAuthorizationCode();
+                // Auth Code
+                string code = GetAuthorizationCode();
 
-            // Access token
-            try
-            {
+                // Access token
                 await manager.GetAccessToken(code);
+
+                // Verify
+                if (manager.Verify())
+                {
+                    manager.SaveToFile();
+                    _logger.LogInformation("Setup complete! Edit the 'settings.json' file to your requirements then run this application again.");
+                    Environment.Exit(0);
+                }
+                else
+                {
+                    _logger.LogError("Setup failed!");
+                }
             }
             catch (Exception)
             {
                 Environment.Exit(1);
-            }
-
-            // Verify
-            if (manager.Verify())
-            {
-                manager.SaveToFile();
-                _logger.LogInformation("Setup complete! Edit the 'settings.json' file to your requirements then run this application again.");
-                Environment.Exit(0);
-            }
-            else
-            {
-                _logger.LogError("Setup failed!");
             }
         }
 
@@ -307,6 +273,35 @@ namespace ImageBot
             } while (!valid);
 
             return code;
+        }
+
+        private static void CreateDefaultImageFolders()
+        {
+            try
+            {
+                _logger.LogDebug("Creating default image folders.");
+                Settings settings = new Settings();
+                FileHelpers.CreateDirectoriesIfNotExist(new string[] { settings.Folder1, settings.Folder2 }, _logger);
+            }
+            catch (IOException ex)
+            {
+                _logger.LogError($"Failed to create directories. Error: {ex.Message}");
+                throw;
+            }
+        }
+
+        private static void CreateDefaultSettingsFile()
+        {
+            try
+            {
+                BotManager.CreateDefaultSettingsFile();
+                _logger.LogDebug("Successfully created new settings file.");
+            }
+            catch (IOException ex)
+            {
+                _logger.LogError($"Failed to create default settings file. Error: {ex.Message}");
+                throw;
+            }
         }
 
 
