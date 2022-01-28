@@ -1,162 +1,256 @@
-﻿using Disboard;
-using Disboard.Mastodon;
-using Disboard.Mastodon.Enums;
-using ImageBot.Bot;
+﻿using ImageBot.Bot;
 using ImageBot.Configuration;
-using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using System;
 using System.Diagnostics;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using ColorConsoleLogger;
 using System.Threading;
 
 namespace ImageBot
 {
     class Program
     {
-        // TODO: filter images, image in dir
-        // TODO: Readme
-        // TODO: Test | win linux
+        private static CancellationTokenSource _cancelTokenSource;
 
-        private static ILoggerFactory _loggerFactory;
-        private static ILogger _logger;
-
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
             PrintBanner();
+            Console.CancelKeyPress += Console_CancelKeyPress;
 
-            // Logging
-            _loggerFactory = LoggerFactory.Create(builder =>
+            // Check configured
+            if (!ConfigurationManager.IsConfigured())
             {
-                builder.SetMinimumLevel(LogLevel.Debug);
-                builder.AddColorConsoleLogger(c =>
-                {
-                    c.IncludeNamePrefix = false;
-                });
-            });
-            _logger = _loggerFactory.CreateLogger<Program>();
+                // Setup
+                await SetupAsync();
+                Console.WriteLine("Press any key to exit...");
+                Console.ReadKey();
+                Environment.Exit(0);
+            }
 
 
+            // Load config
+            Config config = null;
             try
             {
-                CheckSettingsFileExists();
+                config = ConfigurationManager.LoadConfigFile();
             }
-            catch (Exception)
+            catch (IOException ex)
             {
+                Console.WriteLine($"Error: Failed to load config file. Message: {ex.Message}");
                 Environment.Exit(1);
             }
 
 
-            CancellationTokenSource cancelTokenSource = new CancellationTokenSource();
-            if (ConfigurationManager.IsConfigured())
+            // Load setting
+            Settings settings = null;
+            if (!BotManager.SettingsFileExits())
             {
-                _logger.LogDebug("Starting bot...");
-                _logger.LogDebug("Press 'Esc' to exit program.");
+                Console.WriteLine("Settings file doesn't exist. Rerun setup to fix. Terminating program...");
+                WaitForExitWithError();
+            }
+            settings = BotManager.LoadSettingsFile();
 
-                Config config = ConfigurationManager.LoadConfigFile();
-                BotManager bot = new BotManager(_loggerFactory.CreateLogger<BotManager>(), config.Credential);
-                Task botTask = null;
+
+            // Check folders
+            if (!Directory.Exists(settings.Folder1))
+            {
+                Console.WriteLine($"Image folder '{settings.Folder1}' does not exist. Terminating program...");
+                WaitForExitWithError();
+            }
+
+            if (!Directory.Exists(settings.Folder2))
+            {
+                Console.WriteLine($"Image folder '{settings.Folder2}' does not exist. Terminating program...");
+                WaitForExitWithError();
+            }
+
+            // Check for images
+            if (FileHelpers.IsDirectoryEmpty(settings.Folder1) && FileHelpers.IsDirectoryEmpty(settings.Folder2))
+            {
+                Console.WriteLine("No images in folders. Terminating program...");
+                WaitForExitWithError();
+            }
+
+
+            // Start bot
+            Console.WriteLine("Starting bot...");
+            Console.WriteLine("Press Ctrl + C to exit.");
+            BotManager bot = new BotManager(config.Credential, settings);
+            _cancelTokenSource = new CancellationTokenSource();
+            
+            do
+            {
+                Console.WriteLine($"Waiting {bot.Settings.Interval} minutes until next post.");
+                await bot.WaitForNextPost(_cancelTokenSource.Token);
+
+                if (_cancelTokenSource.Token.IsCancellationRequested) { break; }
+
 
                 try
                 {
-                    botTask = bot.StartAsync(cancelTokenSource.Token);
-                    
-                    do
-                    {
-                        if (Console.ReadKey().Key == ConsoleKey.Escape)
-                        {
-                            cancelTokenSource.Cancel();
-                            botTask.Wait();
-                            break;
-                        }
-                    } while (true);
+                    Console.WriteLine($"Uploading '{bot.NextImage}'. Visibility: {bot.Settings.Visibility}. IsSensitive: {bot.Settings.IsSensitive}");
+                    await bot.PostNextImage();
+                }
+                catch (System.Net.Http.HttpRequestException)
+                {
+                    Console.WriteLine("Network error: Failed to upload image.");
+                }
+                catch (Disboard.Exceptions.DisboardException ex)
+                {
+                    Console.WriteLine($"Server error: {ex.Message}");
+                }
+                catch (IOException ex)
+                {
+                    Console.WriteLine($"File error: {ex.Message}");
+                }
+
+                Console.WriteLine("Successfully uploaded image.");
+            } while (!_cancelTokenSource.Token.IsCancellationRequested);
+        }
+
+        private static void Console_CancelKeyPress(object sender, ConsoleCancelEventArgs e)
+        {
+            e.Cancel = true;
+            _cancelTokenSource.Cancel();
+        }
+
+
+        private static async Task SetupAsync()
+        {
+            Console.WriteLine("Starting initial setup. Follow the instructions to setup bot.");
+
+            // Create default image folders.
+            try
+            {
+                Console.WriteLine("Creating default image folders");
+                CreateDefaultImageFolders();
+                Console.WriteLine("Default image folders created.");
+            }
+            catch (IOException ex)
+            {
+                Console.WriteLine($"Failed to create default image folders. Error: {ex.Message}. Terminating program...");
+                WaitForExitWithError();
+            }
+
+            // Create default settings file.
+            try
+            {
+                Console.WriteLine("Creating default setting file.");
+                BotManager.CreateDefaultSettingsFile();
+                Console.WriteLine("Default setting file created.");
+            }
+            catch (IOException ex)
+            {
+                Console.WriteLine($"Failed to create default settings file. Error: {ex.Message}. Terminating program...");
+                WaitForExitWithError();
+            }
+
+            // Get instance url.
+            string instanceUrl = GetInstanceUrl();
+
+            // Get appliction name
+            string applicationName = GetApplicationName();
+
+            // Create Configuration manager.
+            ConfigurationManager manager = new ConfigurationManager(instanceUrl);
+
+            // Register application
+            try
+            {
+                Console.WriteLine("Registering bot...");
+                await manager.RegisterApplication(applicationName);
+            }
+            catch (System.Net.Http.HttpRequestException)
+            {
+                Console.WriteLine("Network error: Could not connect to instance server.");
+                WaitForExitWithError();
+            }
+            catch (Disboard.Exceptions.DisboardException ex)
+            {
+                Console.WriteLine($"Server error: {ex.Message}");
+                WaitForExitWithError();
+            }
+
+            // Get Auth Url.
+            string authUrl = manager.GetAuthorizationUrl();
+
+            // Open auth url in browser.
+            try
+            {
+                Console.WriteLine("Opening link in browser.");
+                Process process = new Process();
+                process.StartInfo.UseShellExecute = true;
+                process.StartInfo.FileName = authUrl;
+                process.Start();
+            }
+            catch (System.ComponentModel.Win32Exception)
+            {
+                Console.WriteLine("Failed to open browser.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to open browser. Error: {ex.Message}");
+            }
+
+            Console.WriteLine("If the link doesn't automatically open, copy and paste this link in your browser and authorize the bot:");
+            Console.WriteLine(authUrl);
+
+            // Get auth code from user.
+            string code = GetAuthorizationCode();
+
+            // Get access token.
+            try
+            {
+                Console.WriteLine("Getting access token...");
+                await manager.GetAccessToken(code);
+            }
+            catch (System.Net.Http.HttpRequestException)
+            {
+                Console.WriteLine("Network error: Could not connect to instance server.");
+                WaitForExitWithError();
+            }
+            catch (Disboard.Exceptions.DisboardException ex)
+            {
+                Console.WriteLine($"Server error: {ex.Message}");
+                WaitForExitWithError();
+            }
+
+            // Verify configuration.
+            if (manager.Verify())
+            {
+                try
+                {
+                    manager.SaveToFile();
                 }
                 catch (Exception)
                 {
-                    Environment.Exit(1);
+                    Console.WriteLine("Error: Failed to save configuration to file.");
+                    WaitForExitWithError();
                 }
+                
+                Console.WriteLine("Setup complete! You can now copy your images into the 'images1' folder. And edit the 'settings.json' file to change the time between posts, post visibility, and whether or not to mark the post as sensitive. When you are ready, run this application again.");
             }
             else
             {
-                _logger.LogWarning("Bot have not been configured.");
-                // Run Setup
-                SetupAsync().Wait();
+                Console.WriteLine("Setup failed!");
             }
         }
 
 
-        // # Setup
-        private static async Task SetupAsync()
+        private static void CreateDefaultImageFolders()
         {
-            _logger.LogDebug("Starting initial setup. Follow the instructions to setup bot.");
-
-            try
-            {
-                // Create default image folders
-                CreateDefaultImageFolders();
-
-                // Create default settings file
-                CreateDefaultSettingsFile();
-
-                // Instance Url
-                string instanceUrl = GetInstanceUrl();
-
-                // Create Manager
-                ConfigurationManager manager = new ConfigurationManager(_loggerFactory.CreateLogger<ConfigurationManager>(), instanceUrl);
-
-                // Get Application Name
-                string applicationName = GetApplicationName();
-
-                // Register application
-                await manager.RegisterApplication(applicationName);
-
-
-                // Get Auth Url
-                string authUrl = manager.GetAuthorizationUrl();
-
-                // Open in browser
-                try
-                {
-                    Process.Start(authUrl);
-                }
-                catch (System.ComponentModel.Win32Exception)
-                {
-                    _logger.LogError("Failed to open browser.");
-                }
-
-                _logger.LogDebug("If the link doesn't automatically open, copy and paste this link in your browser and authorize the bot:");
-                _logger.LogDebug(authUrl);
-
-
-                // Auth Code
-                string code = GetAuthorizationCode();
-
-                // Access token
-                await manager.GetAccessToken(code);
-
-                // Verify
-                if (manager.Verify())
-                {
-                    manager.SaveToFile();
-                    _logger.LogInformation("Setup complete! You can now copy your images into the 'images1' folder. And edit the 'settings.json' file to meet your requirements. When your done, run this application again.");
-                    Environment.Exit(0);
-                }
-                else
-                {
-                    _logger.LogError("Setup failed!");
-                }
-            }
-            catch (Exception)
-            {
-                Environment.Exit(1);
-            }
+            Settings settings = new Settings();
+            FileHelpers.CreateDirectoriesIfNotExist(new string[] { settings.Folder1, settings.Folder2 });
         }
 
+        private static void WaitForExitWithError()
+        {
+            Console.WriteLine("Press any key to exit...");
+            Console.ReadKey();
+            Environment.Exit(1);
+        }
 
-        // # User Input
         private static string GetInstanceUrl()
         {
             string input = string.Empty;
@@ -181,7 +275,7 @@ namespace ImageBot
                 input = input.Replace("https://", "");
 
                 // Validate
-                
+
                 if (!string.IsNullOrEmpty(input) && Regex.Match(input, @".+\..+").Success)
                 {
                     valid = true;
@@ -192,7 +286,6 @@ namespace ImageBot
                 }
 
             } while (!valid);
-
 
             return input;
         }
@@ -256,64 +349,6 @@ namespace ImageBot
             return code;
         }
 
-        private static void CreateDefaultImageFolders()
-        {
-            try
-            {
-                _logger.LogDebug("Creating default image folders.");
-                Settings settings = new Settings();
-                FileHelpers.CreateDirectoriesIfNotExist(new string[] { settings.Folder1, settings.Folder2 }, _logger);
-            }
-            catch (IOException ex)
-            {
-                _logger.LogError($"Failed to create directories. Error: {ex.Message}");
-                throw;
-            }
-        }
-
-        private static void CreateDefaultSettingsFile()
-        {
-            try
-            {
-                BotManager.CreateDefaultSettingsFile();
-                _logger.LogDebug("Successfully created new settings file.");
-            }
-            catch (IOException ex)
-            {
-                _logger.LogError($"Failed to create default settings file. Error: {ex.Message}");
-                throw;
-            }
-        }
-
-        private static void CheckSettingsFileExists()
-        {
-            try
-            {
-                if (!BotManager.SettingsFileExits())
-                {
-                    _logger.LogWarning("Settings file doesn't exist.");
-
-                    try
-                    {
-                        BotManager.CreateDefaultSettingsFile();
-                        _logger.LogInformation("Successfully created new settings file.");
-                    }
-                    catch (IOException)
-                    {
-                        _logger.LogError("Failed to create new settings file.");
-                        throw;
-                    }
-                }
-            }
-            catch (IOException ex)
-            {
-                _logger.LogError($"Error: {ex.Message}");
-                throw;
-            }
-        }
-
-
-        // # Console
         private static void PrintBanner()
         {
             Console.WriteLine("#################################################");

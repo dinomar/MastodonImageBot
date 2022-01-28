@@ -1,15 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.32106.194
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.32112.339
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ImageBot", "ImageBot\ImageBot.csproj", "{C9D760E9-F0A7-481C-93A6-A5C3A4F410C9}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Disboard", "Disboard\Disboard.csproj", "{51A840E9-3DE1-4A59-9135-D0C88A7F1B21}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Disboard.Mastodon", "Disboard.Mastodon\Disboard.Mastodon.csproj", "{7B1BCEAC-C375-4C9B-9183-1712618B2E62}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ColorConsoleLogger", "ColorConsoleLogger\ColorConsoleLogger.csproj", "{285C9ED2-5D51-45F4-8C2A-46ADF2722C8B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -29,10 +27,6 @@ Global
 		{7B1BCEAC-C375-4C9B-9183-1712618B2E62}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7B1BCEAC-C375-4C9B-9183-1712618B2E62}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7B1BCEAC-C375-4C9B-9183-1712618B2E62}.Release|Any CPU.Build.0 = Release|Any CPU
-		{285C9ED2-5D51-45F4-8C2A-46ADF2722C8B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{285C9ED2-5D51-45F4-8C2A-46ADF2722C8B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{285C9ED2-5D51-45F4-8C2A-46ADF2722C8B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{285C9ED2-5D51-45F4-8C2A-46ADF2722C8B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -33,55 +32,27 @@ namespace ImageBot
             return temp;
         }
 
-        public static T CreateFileIfNotExists<T>(string filename, T objectToCreate) where T : class
-        {
-
-            if (!SerializedFileExists<T>(filename))
-            {
-                SaveObjectToFile(filename, objectToCreate);
-            }
-
-            return objectToCreate;
-        }
-
-        public static T CreateNewJsonFile<T>(string filename, T objectToCreate) where T : class
-        {
-            SaveObjectToFile(filename, objectToCreate);
-            return objectToCreate;
-        }
-
         public static void SaveObjectToFile(string filename, object objectToSave)
         {
             string json = JsonConvert.SerializeObject(objectToSave, Formatting.Indented);
             File.WriteAllText(filename, json);
         }
 
-        public static void CreateDirectoriesIfNotExist(string[] directories, ILogger logger = null)
+        public static void CreateDirectoriesIfNotExist(string[] directories)
         {
             if (directories == null) { throw new ArgumentNullException(paramName: nameof(directories)); }
 
             foreach (string dir in directories)
             {
-                CreateDirectoryIfNotExist(dir, logger);
+                CreateDirectoryIfNotExist(dir);
             }
         }
 
-        public static void CreateDirectoryIfNotExist(string directory, ILogger logger = null)
+        public static void CreateDirectoryIfNotExist(string directory)
         {
-            try
+            if (!Directory.Exists(directory))
             {
-                if (!Directory.Exists(directory))
-                {
-                    logger?.LogWarning($"'{directory}' folder doesn't exist.");
-                    logger?.LogDebug($"Creating '{directory}' directory.");
-                    Directory.CreateDirectory(directory);
-                    logger?.LogDebug($"Created '{directory}' directory.");
-                }
-            }
-            catch (IOException)
-            {
-                logger?.LogError($"Failed to create '{directory}' directory.");
-                throw;
+                Directory.CreateDirectory(directory);
             }
         }
 
