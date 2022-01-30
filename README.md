@@ -4,7 +4,7 @@
 
 Download and install [.NET runtime 3.1](https://dotnet.microsoft.com/en-us/download/dotnet/thank-you/runtime-3.1.22-windows-x64-installer)  
 
-Download and unzip the latest version [here](#).
+Download and unzip the latest version [here](https://github.com/dinomar/MastodonImageBot/releases/tag/V1.0.0).
 
 Navigate to the extracted folder and run ImageBot.exe, this will start the initial setup of the bot.
 
