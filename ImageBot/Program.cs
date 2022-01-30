@@ -46,7 +46,7 @@ namespace ImageBot
             Settings settings = null;
             if (!BotManager.SettingsFileExits())
             {
-                Console.WriteLine("Settings file doesn't exist. Rerun setup to fix. Terminating program...");
+                Console.WriteLine("Settings file doesn't exist. Rerun setup to fix. Exiting program...");
                 WaitForExitWithError();
             }
             settings = BotManager.LoadSettingsFile();
@@ -55,27 +55,27 @@ namespace ImageBot
             // Check folders
             if (!Directory.Exists(settings.Folder1))
             {
-                Console.WriteLine($"Image folder '{settings.Folder1}' does not exist. Terminating program...");
+                Console.WriteLine($"Image folder '{settings.Folder1}' does not exist. Exiting program...");
                 WaitForExitWithError();
             }
 
             if (!Directory.Exists(settings.Folder2))
             {
-                Console.WriteLine($"Image folder '{settings.Folder2}' does not exist. Terminating program...");
+                Console.WriteLine($"Image folder '{settings.Folder2}' does not exist. Exiting program...");
                 WaitForExitWithError();
             }
 
             // Check for images
             if (FileHelpers.IsDirectoryEmpty(settings.Folder1) && FileHelpers.IsDirectoryEmpty(settings.Folder2))
             {
-                Console.WriteLine("No images in folders. Terminating program...");
+                Console.WriteLine("No images in folders. Exiting program...");
                 WaitForExitWithError();
             }
 
 
             // Start bot
             Console.WriteLine("Starting bot...");
-            Console.WriteLine("Press Ctrl + C to exit.");
+            Console.WriteLine("Press Ctrl + C to Stop.");
             BotManager bot = new BotManager(config.Credential, settings);
             _cancelTokenSource = new CancellationTokenSource();
             
@@ -91,6 +91,7 @@ namespace ImageBot
                 {
                     Console.WriteLine($"Uploading '{bot.NextImage}'. Visibility: {bot.Settings.Visibility}. IsSensitive: {bot.Settings.IsSensitive}");
                     await bot.PostNextImage();
+                    Console.WriteLine("Successfully uploaded image.");
                 }
                 catch (System.Net.Http.HttpRequestException)
                 {
@@ -104,8 +105,6 @@ namespace ImageBot
                 {
                     Console.WriteLine($"File error: {ex.Message}");
                 }
-
-                Console.WriteLine("Successfully uploaded image.");
             } while (!_cancelTokenSource.Token.IsCancellationRequested);
         }
 
@@ -129,7 +128,7 @@ namespace ImageBot
             }
             catch (IOException ex)
             {
-                Console.WriteLine($"Failed to create default image folders. Error: {ex.Message}. Terminating program...");
+                Console.WriteLine($"Failed to create default image folders. Error: {ex.Message}. Exiting program...");
                 WaitForExitWithError();
             }
 
@@ -142,7 +141,7 @@ namespace ImageBot
             }
             catch (IOException ex)
             {
-                Console.WriteLine($"Failed to create default settings file. Error: {ex.Message}. Terminating program...");
+                Console.WriteLine($"Failed to create default settings file. Error: {ex.Message}. Exiting program...");
                 WaitForExitWithError();
             }
 

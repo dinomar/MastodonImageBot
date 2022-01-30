@@ -51,7 +51,7 @@ namespace ImageBot.Bot
 
             do
             {
-                await Task.Delay(1000);
+                await Task.Delay(500);
             } while (!cancellationToken.IsCancellationRequested && _nextPost > DateTime.Now);
         }
 
