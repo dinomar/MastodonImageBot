@@ -10,7 +10,7 @@ Download and unzip the latest version [here](https://github.com/dinomar/Mastodon
 
 Navigate to the extracted folder and run `ImageBot.exe`, this will start the initial setup of the bot.
 
-#### Linux
+#### Linux:
 Download and install [.NET Core 3.1 Runtime](https://docs.microsoft.com/en-us/dotnet/core/install/linux-ubuntu)  
 
 Navigate to the extracted folder and run `dotnet ImageBot.dll`, this will start the initial setup of the bot.
