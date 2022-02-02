@@ -3,7 +3,7 @@
 ## Instructions
 
 #### Windows:
-Download and install [Visual C++ Redistributable for Visual Studio 2015](https://www.microsoft.com/en-in/download/details.aspx?id=48145)
+Download and install [Visual C++ Redistributable for Visual Studio 2015](https://www.microsoft.com/en-in/download/details.aspx?id=48145)  
 Download and install [.NET Core 3.1 Runtime](https://dotnet.microsoft.com/en-us/download/dotnet/thank-you/runtime-3.1.22-windows-x64-installer)  
 
 Download and unzip the latest version [here](https://github.com/dinomar/MastodonImageBot/releases/tag/V1.0.0).
@@ -13,7 +13,9 @@ Navigate to the extracted folder and run `ImageBot.exe`, this will start the ini
 #### Linux:
 Download and install [.NET Core 3.1 Runtime](https://docs.microsoft.com/en-us/dotnet/core/install/linux-ubuntu)  
 
-Navigate to the extracted folder and run `dotnet ImageBot.dll`, this will start the initial setup of the bot.
+Download and unzip the latest version [here](https://github.com/dinomar/MastodonImageBot/releases/tag/V1.0.0).  
+
+Navigate to the extracted folder and run `dotnet ImageBot.dll`, this will start the initial setup of the bot.  
 
 ### Initial setup and authorization.
 
